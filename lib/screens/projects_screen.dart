@@ -177,70 +177,87 @@ class _ProjectCardState extends State<_ProjectCard>
           children: [
             // ── Header row
             Padding(
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: color.withOpacity(0.3)),
-                      boxShadow: [
-                        BoxShadow(color: color.withOpacity(0.2), blurRadius: 16)
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(project['icon'] as String,
-                          style: const TextStyle(fontSize: 26)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project['title'] as String,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: (project['tags'] as List<String>)
-                              .map((t) => SkillTag(label: t, color: color.blue))
-                              .toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // GitHub + Live buttons
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if ((project['githubUrl'] as String).isNotEmpty)
-                        _IconBtn(
-                          icon: Icons.code_rounded,
-                          label: 'GitHub',
-                          color: color,
-                          onTap: () => widget.onLaunch(project['githubUrl'] as String),
+                      // Icon
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: color.withOpacity(0.3)),
+                          boxShadow: [
+                            BoxShadow(color: color.withOpacity(0.2), blurRadius: 14)
+                          ],
                         ),
-                      if ((project['liveUrl'] as String).isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        _IconBtn(
-                          icon: Icons.open_in_new_rounded,
-                          label: 'Live',
-                          color: AppColors.accent,
-                          onTap: () => widget.onLaunch(project['liveUrl'] as String),
+                        child: Center(
+                          child: Text(project['icon'] as String,
+                              style: const TextStyle(fontSize: 24)),
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 12),
+                      // Title + tags
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              project['title'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 5,
+                              runSpacing: 4,
+                              children: (project['tags'] as List<String>)
+                                  .map((t) => SkillTag(
+                                label: t,
+                                color: color.value,
+                                fontSize: 10,
+                              ))
+                                  .toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // GitHub + Live buttons — stacked vertically to avoid overflow
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if ((project['githubUrl'] as String).isNotEmpty)
+                            _IconBtn(
+                              icon: Icons.code_rounded,
+                              label: 'GitHub',
+                              color: color,
+                              onTap: () => widget.onLaunch(
+                                  project['githubUrl'] as String),
+                            ),
+                          if ((project['liveUrl'] as String).isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            _IconBtn(
+                              icon: Icons.open_in_new_rounded,
+                              label: 'Live',
+                              color: AppColors.accent,
+                              onTap: () => widget.onLaunch(
+                                  project['liveUrl'] as String),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -249,7 +266,7 @@ class _ProjectCardState extends State<_ProjectCard>
 
             // ── Description
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 project['description'] as String,
                 style: GoogleFonts.spaceGrotesk(
@@ -264,33 +281,37 @@ class _ProjectCardState extends State<_ProjectCard>
 
             // ── Tab bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Row(
-                children: [
-                  _Tab(
-                    label: 'Overview',
-                    icon: Icons.info_outline,
-                    active: _activeTab == 0,
-                    color: color,
-                    onTap: () => _setTab(0),
-                  ),
-                  const SizedBox(width: 8),
-                  _Tab(
-                    label: 'Code View',
-                    icon: Icons.terminal_rounded,
-                    active: _activeTab == 1,
-                    color: color,
-                    onTap: () => _setTab(1),
-                  ),
-                  const SizedBox(width: 8),
-                  _Tab(
-                    label: 'Screenshots',
-                    icon: Icons.image_outlined,
-                    active: _activeTab == 2,
-                    color: color,
-                    onTap: () => _setTab(2),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _Tab(
+                      label: 'Overview',
+                      icon: Icons.info_outline,
+                      active: _activeTab == 0,
+                      color: color,
+                      onTap: () => _setTab(0),
+                    ),
+                    const SizedBox(width: 8),
+                    _Tab(
+                      label: 'Code View',
+                      icon: Icons.terminal_rounded,
+                      active: _activeTab == 1,
+                      color: color,
+                      onTap: () => _setTab(1),
+                    ),
+                    const SizedBox(width: 8),
+                    _Tab(
+                      label: 'Screenshots',
+                      icon: Icons.image_outlined,
+                      active: _activeTab == 2,
+                      color: color,
+                      onTap: () => _setTab(2),
+                    ),
+                  ],
+                ),
               ),
             ),
 

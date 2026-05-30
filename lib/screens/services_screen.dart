@@ -10,7 +10,8 @@ import '../widgets/tilt_card.dart';
 
 class ServicesScreen extends StatelessWidget {
   final VoidCallback onHireTap;
-  const ServicesScreen({super.key, required this.onHireTap});
+  final ScrollController? scrollController;
+  const ServicesScreen({super.key, required this.onHireTap, this.scrollController});
 
   static const _colors = [
     AppColors.primary, AppColors.secondary,
@@ -22,7 +23,8 @@ class ServicesScreen extends StatelessWidget {
     return ResponsiveBuilder(builder: (ctx, r) {
       return SafeArea(
         child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
+          controller: scrollController,
+          physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.symmetric(
               horizontal: r.hPad, vertical: r.vPad),
           child: Column(

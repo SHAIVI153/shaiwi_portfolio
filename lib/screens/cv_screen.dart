@@ -8,7 +8,8 @@ import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
 
 class CVScreen extends StatefulWidget {
-  const CVScreen({super.key});
+  final ScrollController? scrollController;
+  const CVScreen({super.key, this.scrollController});
 
   @override
   State<CVScreen> createState() => _CVScreenState();
