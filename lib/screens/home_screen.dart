@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shaiwi_portfolio/screens/responsive_screen.dart';
 import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
+import '../widgets/anime_character.dart';
 
 class HomeScreen extends StatelessWidget {
   final VoidCallback onContactTap;
   final VoidCallback onProjectsTap;
-
   const HomeScreen({
     super.key,
     required this.onContactTap,
@@ -18,318 +19,226 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 768;
+    return ResponsiveBuilder(builder: (ctx, r) {
+      return Stack(
+        children: [
+          // Particle bg
+          const Positioned.fill(child: _ParticleBg()),
+          // Cyan glow top-left
+          Positioned(top: -80, left: -80,
+              child: _GlowBlob(AppColors.primary.withOpacity(0.07), 480)),
+          // Purple glow bottom-right
+          Positioned(bottom: -120, right: -80,
+              child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-    return Stack(
-      children: [
-        // ── Animated particle background
-        const Positioned.fill(child: ParticleBackground()),
-
-        // ── Radial glows
-        Positioned(
-          top: -120,
-          left: -120,
-          child: Container(
-            width: 550,
-            height: 550,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.primary.withOpacity(0.07),
-                Colors.transparent,
-              ]),
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.hPad, vertical: r.vPad),
+              child: r.sideBySide
+                  ? _DesktopHero(r: r,
+                  onContact: onContactTap,
+                  onProjects: onProjectsTap)
+                  : _MobileHero(r: r,
+                  onContact: onContactTap,
+                  onProjects: onProjectsTap),
             ),
           ),
-        ),
-        Positioned(
-          bottom: -150,
-          right: -100,
-          child: Container(
-            width: 600,
-            height: 600,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.secondary.withOpacity(0.07),
-                Colors.transparent,
-              ]),
-            ),
-          ),
-        ),
-
-        // ── Content
-        Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 20 : 80,
-              vertical: isMobile ? 32 : 40,
-            ),
-            child: isMobile
-                ? _buildMobileLayout(context, size)
-                : _buildDesktopLayout(context, size),
-          ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
+}
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // DESKTOP LAYOUT
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildDesktopLayout(BuildContext context, Size size) {
+// ─── Desktop: text left, card right ──────────────────────────────────────────
+class _DesktopHero extends StatelessWidget {
+  final Rsp r;
+  final VoidCallback onContact;
+  final VoidCallback onProjects;
+  const _DesktopHero(
+      {required this.r, required this.onContact, required this.onProjects});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(flex: 6, child: _buildHeroText(isMobile: false)),
-        const SizedBox(width: 60),
-        _buildProfileCard(isMobile: false, screenWidth: size.width),
+        Expanded(flex: 55,
+            child: _HeroText(r: r, onContact: onContact, onProjects: onProjects)),
+        SizedBox(width: r.sp(48)),
+        _ProfileCard(r: r),
       ],
     );
   }
+}
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MOBILE LAYOUT
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildMobileLayout(BuildContext context, Size size) {
+// ─── Mobile: card top, text below — same look as desktop just stacked ─────────
+class _MobileHero extends StatelessWidget {
+  final Rsp r;
+  final VoidCallback onContact;
+  final VoidCallback onProjects;
+  const _MobileHero(
+      {required this.r, required this.onContact, required this.onProjects});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildProfileCard(isMobile: true, screenWidth: size.width),
-        const SizedBox(height: 40),
-        _buildHeroText(isMobile: true),
+        Center(child: _ProfileCard(r: r)),
+        SizedBox(height: r.sp(36)),
+        _HeroText(r: r, onContact: onContact,
+            onProjects: onProjects, centered: true),
       ],
     );
   }
+}
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PROFILE CARD — Responsive, professional, full photo
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildProfileCard({required bool isMobile, required double screenWidth}) {
-    // Responsive card width
-    final cardWidth = isMobile
-        ? (screenWidth - 40).clamp(260.0, 340.0)
-        : 320.0;
-    // Photo height: taller on desktop, comfortable on mobile
-    final photoHeight = isMobile ? cardWidth * 1.05 : cardWidth * 1.1;
+// ─── Profile Card ─────────────────────────────────────────────────────────────
+class _ProfileCard extends StatelessWidget {
+  final Rsp r;
+  const _ProfileCard({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    final w = r.profileCardWidth;
+    final photoH = w * 1.08;
 
     return TiltCard(
+      maxTilt: r.isMobile ? 4 : 8,
       child: Container(
-        width: cardWidth,
+        width: w,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.25),
-            width: 1.5,
-          ),
           color: AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.primary.withOpacity(0.22), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.18),
-              blurRadius: 50,
-              spreadRadius: 4,
-            ),
+                color: AppColors.primary.withOpacity(0.16),
+                blurRadius: 48, spreadRadius: 3),
             BoxShadow(
-              color: AppColors.secondary.withOpacity(0.10),
-              blurRadius: 70,
-              offset: const Offset(20, 30),
-            ),
+                color: AppColors.secondary.withOpacity(0.10),
+                blurRadius: 64, offset: const Offset(16, 24)),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Photo section — fills card width, properly cropped
+            // ── Photo
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
+              borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(19)),
               child: SizedBox(
-                width: cardWidth,
-                height: photoHeight,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Actual photo — centered on face
-                    Image.asset(
-                      'assets/images/profile.jpg',
-                      width: cardWidth,
-                      height: photoHeight,
-                      fit: BoxFit.cover,
-                      alignment: const Alignment(0.0, -0.35), // slight up = show face fully
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.surface,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.person_outline,
-                                  size: 56,
-                                  color: AppColors.primary.withOpacity(0.35)),
-                              const SizedBox(height: 8),
-                              Text('profile.jpg',
-                                  style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  )),
-                            ],
-                          ),
-                        ),
+                width: w,
+                height: photoH,
+                child: Stack(fit: StackFit.expand, children: [
+                  Image.asset(
+                    'assets/images/profile.jpg',
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(0.0, -0.3),
+                    filterQuality: FilterQuality.high,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.surface,
+                      child: Center(
+                        child: Icon(Icons.person_outline,
+                            size: w * 0.3,
+                            color: AppColors.primary.withOpacity(0.3)),
                       ),
                     ),
-
-                    // Subtle dark vignette at top so badge is readable
-                    Positioned(
-                      top: 0, left: 0, right: 0,
-                      child: Container(
-                        height: 70,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                  ),
+                  // Top dark vignette
+                  Positioned(top: 0, left: 0, right: 0,
+                    child: Container(height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.45),
-                              Colors.transparent,
-                            ],
-                          ),
+                            colors: [Colors.black.withOpacity(0.45),
+                              Colors.transparent]),
+                      ),
+                    ),
+                  ),
+                  // Green glow (matches photo bg)
+                  Positioned(top: -30, right: -30,
+                      child: _GlowBlob(
+                          const Color(0xFF00FF88).withOpacity(0.15), 160)),
+                  // Bottom fade into card
+                  Positioned(bottom: 0, left: 0, right: 0,
+                    child: Container(height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, AppColors.card],
                         ),
                       ),
                     ),
-
-                    // Green glow from top-right (matches photo bg)
-                    Positioned(
-                      top: -20, right: -20,
-                      child: Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(colors: [
-                            const Color(0xFF00FF88).withOpacity(0.18),
-                            Colors.transparent,
-                          ]),
-                        ),
-                      ),
-                    ),
-
-                    // Gradient fade at bottom into card bg
-                    Positioned(
-                      bottom: 0, left: 0, right: 0,
-                      child: Container(
-                        height: 90,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              AppColors.card.withOpacity(0.95),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Flutter Dev badge — top right
-                    Positioned(
-                      top: 14, right: 14,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: AppColors.primary.withOpacity(0.5)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.2),
-                              blurRadius: 10,
-                            )
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('📱', style: TextStyle(fontSize: 10)),
-                            const SizedBox(width: 4),
-                            Text('Flutter Dev',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 10,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                )),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  // Badge top-right
+                  Positioned(top: 14, right: 14,
+                      child: _Badge('📱 Flutter Dev', AppColors.primary)),
+                ]),
               ),
             ),
 
-            // ── Info section below photo
+            // ── Info
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+              padding: EdgeInsets.fromLTRB(
+                  r.sp(20), r.sp(6), r.sp(20), r.sp(20)),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Name
-                  Text(
-                    PortfolioData.name,
+                  Text(PortfolioData.name,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: isMobile ? 19 : 20,
+                      fontSize: r.fs(20),
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  // Nickname
-                  Text(
-                    '@${PortfolioData.nickname}',
+                  SizedBox(height: r.sp(4)),
+                  Text('@${PortfolioData.nickname}',
                     style: GoogleFonts.jetBrainsMono(
-                      fontSize: 12,
+                      fontSize: r.fs(12),
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  // Skill badges — Flutter, Dart, SEO only (web removed)
-                  const Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
+                  SizedBox(height: r.sp(12)),
+                  Wrap(
+                    spacing: 6, runSpacing: 6,
                     alignment: WrapAlignment.center,
-                    children: [
-                      SkillTag(label: 'Flutter', color: AppColors.primary),
-                      SkillTag(label: 'Dart', color: AppColors.primary),
-                      SkillTag(label: 'SEO', color: AppColors.accent),
-                      SkillTag(
-                          label: 'Digital Marketing',
-                          color: AppColors.secondary),
+                    children: const [
+                      SkillTag(label: 'Flutter', color: 0xFF00D4FF),
+                      SkillTag(label: 'Dart',    color: 0xFF00D4FF),
+                      SkillTag(label: 'SEO',     color: 0xFF00FF88),
+                      SkillTag(label: 'Marketing', color: 0xFF7B2FFF),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  // Status dot
+                  SizedBox(height: r.sp(12)),
+                  // Status
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                        horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.1),
+                      color: AppColors.accent.withOpacity(0.09),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: AppColors.accent.withOpacity(0.35)),
+                          color: AppColors.accent.withOpacity(0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _PulsingDot(),
+                        const PulsingDot(),
                         const SizedBox(width: 8),
                         Text('Open to work',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent,
-                            )),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: r.fs(12),
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -341,486 +250,427 @@ class HomeScreen extends StatelessWidget {
       ),
     )
         .animate()
-        .fadeIn(duration: 800.ms, delay: 200.ms)
-        .scale(
-      begin: const Offset(0.92, 0.92),
-      curve: Curves.easeOutBack,
-    );
+        .fadeIn(duration: 700.ms, delay: 150.ms)
+        .scale(begin: const Offset(0.93, 0.93),
+        curve: Curves.easeOutBack);
   }
+}
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // HERO TEXT — Webflow-style staggered cinematic animation
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildHeroText({required bool isMobile}) {
+// ─── Hero Text ────────────────────────────────────────────────────────────────
+class _HeroText extends StatelessWidget {
+  final Rsp r;
+  final VoidCallback onContact;
+  final VoidCallback onProjects;
+  final bool centered;
+  const _HeroText({
+    required this.r,
+    required this.onContact,
+    required this.onProjects,
+    this.centered = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final align = centered ? CrossAxisAlignment.center : CrossAxisAlignment.start;
+    final textAlign = centered ? TextAlign.center : TextAlign.start;
+    final wrapAlign = centered ? WrapAlignment.center : WrapAlignment.start;
+
     return Column(
-      crossAxisAlignment:
-      isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: align,
       children: [
-        // ── "Available" tag — slides down + fade
-        _AvailableTag()
-            .animate()
-            .fadeIn(duration: 500.ms, delay: 100.ms)
-            .slideY(begin: -0.6, end: 0, curve: Curves.easeOutCubic),
+        // Available tag
+        _AvailTag(r: r)
+            .animate().fadeIn(duration: 500.ms, delay: 100.ms)
+            .slideY(begin: -0.5, end: 0, curve: Curves.easeOutCubic),
 
-        const SizedBox(height: 28),
+        SizedBox(height: r.sp(22)),
 
-        // ── Name — letters reveal one by one (Webflow style)
-        _AnimatedName(isMobile: isMobile),
+        // Name — word by word
+        _AnimatedName(r: r, centered: centered),
 
-        const SizedBox(height: 10),
+        SizedBox(height: r.sp(10)),
 
-        // ── Title line — typewriter + slide
-        _TypewriterTitle()
-            .animate(delay: 600.ms)
-            .fadeIn(duration: 500.ms)
-            .slideX(begin: -0.15, end: 0, curve: Curves.easeOutCubic),
+        // Typewriter title
+        _TypewriterRow(r: r)
+            .animate(delay: 550.ms)
+            .fadeIn(duration: 450.ms)
+            .slideX(begin: -0.1, end: 0, curve: Curves.easeOutCubic),
 
-        const SizedBox(height: 30),
+        SizedBox(height: r.sp(22)),
 
-        // ── Bio — word-by-word appear
-        _AnimatedBio(isMobile: isMobile)
-            .animate(delay: 800.ms)
-            .fadeIn(duration: 700.ms)
-            .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
+        // Bio
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Text(
+            PortfolioData.bio,
+            textAlign: textAlign,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: r.fs(15),
+              color: AppColors.textSecondary,
+              height: 1.8,
+            ),
+          ),
+        )
+            .animate(delay: 750.ms)
+            .fadeIn(duration: 600.ms)
+            .slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
 
-        const SizedBox(height: 44),
+        SizedBox(height: r.sp(36)),
 
-        // ── Buttons — staggered pop-in
+        // Buttons
         Wrap(
-          spacing: 16,
+          spacing: 14,
           runSpacing: 12,
-          alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
+          alignment: wrapAlign,
           children: [
             GlowButton(
               label: 'VIEW PROJECTS',
-              onTap: onProjectsTap,
+              onTap: onProjects,
               color: AppColors.primary,
+              fontSize: r.fs(12),
             )
-                .animate(delay: 1000.ms)
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: 0.4, end: 0, curve: Curves.easeOutBack),
+                .animate(delay: 950.ms)
+                .fadeIn(duration: 350.ms)
+                .slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
             GlowButton(
               label: 'HIRE ME',
-              onTap: onContactTap,
+              onTap: onContact,
               color: AppColors.secondary,
               outlined: true,
+              fontSize: r.fs(12),
             )
-                .animate(delay: 1150.ms)
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: 0.4, end: 0, curve: Curves.easeOutBack),
+                .animate(delay: 1100.ms)
+                .fadeIn(duration: 350.ms)
+                .slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
           ],
         ),
 
-        const SizedBox(height: 56),
+        SizedBox(height: r.sp(48)),
 
-        // ── Stats row — count-up animation
-        _StatsRow(isMobile: isMobile)
-            .animate(delay: 1300.ms)
-            .fadeIn(duration: 600.ms)
-            .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
+        // Stats
+        _StatsRow(r: r, centered: centered)
+            .animate(delay: 1250.ms)
+            .fadeIn(duration: 500.ms)
+            .slideY(begin: 0.15, end: 0, curve: Curves.easeOutCubic),
       ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED NAME — each word slides + fades like Webflow hero text
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Animated name ────────────────────────────────────────────────────────────
 class _AnimatedName extends StatelessWidget {
-  final bool isMobile;
-  const _AnimatedName({required this.isMobile});
+  final Rsp r;
+  final bool centered;
+  const _AnimatedName({required this.r, required this.centered});
 
   @override
   Widget build(BuildContext context) {
     final words = PortfolioData.name.split(' ');
     return Wrap(
-      alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-      children: words.asMap().entries.map((entry) {
-        final i = entry.key;
-        final word = entry.value;
-        final isLast = i == words.length - 1;
+      alignment: centered ? WrapAlignment.center : WrapAlignment.start,
+      children: words.asMap().entries.map((e) {
+        final i = e.key;
+        final word = e.value;
         return Padding(
-          padding: EdgeInsets.only(right: isLast ? 0 : 10),
+          padding: EdgeInsets.only(right: i < words.length - 1 ? 10 : 0),
           child: ShaderMask(
             blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => LinearGradient(
+            shaderCallback: (b) => LinearGradient(
               colors: i == 0
                   ? [AppColors.textPrimary, AppColors.textPrimary]
-                  : [AppColors.primary, const Color(0xFF00A8CC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: Text(
-              word,
+                  : [AppColors.primary, const Color(0xFF00B8E0)],
+            ).createShader(b),
+            child: Text(word,
               style: GoogleFonts.spaceGrotesk(
-                fontSize: isMobile ? 44 : 62,
+                fontSize: r.fs(60),
                 fontWeight: FontWeight.w900,
                 letterSpacing: -2.0,
                 height: 1.05,
               ),
             ),
           )
-              .animate(delay: (300 + i * 180).ms)
-              .fadeIn(duration: 600.ms)
-              .slideY(
-            begin: 0.5,
-            end: 0,
-            duration: 600.ms,
-            curve: Curves.easeOutCubic,
-          )
-              .blur(
-            begin: const Offset(0, 8),
-            end: Offset.zero,
-            duration: 500.ms,
-          ),
+              .animate(delay: (280 + i * 160).ms)
+              .fadeIn(duration: 550.ms)
+              .slideY(begin: 0.45, end: 0, curve: Curves.easeOutCubic)
+              .blur(begin: const Offset(0, 6), end: Offset.zero,
+              duration: 500.ms),
         );
       }).toList(),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPEWRITER TITLE — "Flutter Developer • SEO & Digital Marketing"
-// ─────────────────────────────────────────────────────────────────────────────
-class _TypewriterTitle extends StatefulWidget {
-  @override
-  State<_TypewriterTitle> createState() => _TypewriterTitleState();
+// ─── Typewriter cycling title ─────────────────────────────────────────────────
+class _TypewriterRow extends StatefulWidget {
+  final Rsp r;
+  const _TypewriterRow({required this.r});
+  @override State<_TypewriterRow> createState() => _TypewriterRowState();
 }
-
-class _TypewriterTitleState extends State<_TypewriterTitle> {
-  // Roles to cycle through
+class _TypewriterRowState extends State<_TypewriterRow> {
   static const _roles = [
     'Flutter Developer',
     'SEO Specialist',
     'Digital Marketer',
     'Dart Programmer',
-    'Web Developer',
   ];
-
-  int _roleIndex = 0;
-  String _displayed = '';
-  bool _deleting = false;
-  int _charIndex = 0;
+  int _ri = 0;
+  String _text = '';
+  bool _del = false;
+  int _ci = 0;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 800), _type);
+    Future.delayed(const Duration(milliseconds: 800), _tick);
   }
 
-  void _type() {
+  void _tick() {
     if (!mounted) return;
-    final target = _roles[_roleIndex];
-
-    if (!_deleting) {
-      if (_charIndex < target.length) {
-        setState(() {
-          _charIndex++;
-          _displayed = target.substring(0, _charIndex);
-        });
-        Future.delayed(
-            Duration(milliseconds: _charIndex == 1 ? 300 : 55), _type);
+    final t = _roles[_ri];
+    if (!_del) {
+      if (_ci < t.length) {
+        setState(() { _ci++; _text = t.substring(0, _ci); });
+        Future.delayed(Duration(milliseconds: _ci == 1 ? 280 : 52), _tick);
       } else {
-        // Pause then delete
         Future.delayed(const Duration(milliseconds: 1800), () {
-          if (mounted) {
-            setState(() => _deleting = true);
-            _type();
-          }
+          if (mounted) { setState(() => _del = true); _tick(); }
         });
       }
     } else {
-      if (_charIndex > 0) {
-        setState(() {
-          _charIndex--;
-          _displayed = target.substring(0, _charIndex);
-        });
-        Future.delayed(const Duration(milliseconds: 35), _type);
+      if (_ci > 0) {
+        setState(() { _ci--; _text = t.substring(0, _ci); });
+        Future.delayed(const Duration(milliseconds: 34), _tick);
       } else {
-        setState(() {
-          _deleting = false;
-          _roleIndex = (_roleIndex + 1) % _roles.length;
-        });
-        Future.delayed(const Duration(milliseconds: 300), _type);
+        setState(() { _del = false; _ri = (_ri + 1) % _roles.length; });
+        Future.delayed(const Duration(milliseconds: 280), _tick);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          '> ',
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 18,
-            color: AppColors.accent,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          _displayed,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 18,
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        _BlinkingCursor(),
-      ],
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Text('> ', style: GoogleFonts.jetBrainsMono(
+          fontSize: widget.r.fs(16),
+          color: AppColors.accent, fontWeight: FontWeight.w700)),
+      Text(_text, style: GoogleFonts.jetBrainsMono(
+          fontSize: widget.r.fs(16),
+          color: AppColors.primary, fontWeight: FontWeight.w600)),
+      _Cursor(fs: widget.r.fs(16)),
+    ]);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED BIO — slides up with slight blur (Webflow-style reveal)
-// ─────────────────────────────────────────────────────────────────────────────
-class _AnimatedBio extends StatelessWidget {
-  final bool isMobile;
-  const _AnimatedBio({required this.isMobile});
-
+class _Cursor extends StatefulWidget {
+  final double fs;
+  const _Cursor({required this.fs});
+  @override State<_Cursor> createState() => _CursorState();
+}
+class _CursorState extends State<_Cursor>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  @override void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 520))..repeat(reverse: true);
+  }
+  @override void dispose() { _c.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 540),
-      child: Text(
-        PortfolioData.bio,
-        textAlign: isMobile ? TextAlign.center : TextAlign.start,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 15,
-          color: AppColors.textSecondary,
-          height: 1.85,
-          letterSpacing: 0.1,
-        ),
+    return AnimatedBuilder(animation: _c,
+      builder: (_, __) => Opacity(opacity: _c.value,
+        child: Text('|', style: GoogleFonts.jetBrainsMono(
+            fontSize: widget.fs,
+            color: AppColors.accent, fontWeight: FontWeight.w700)),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AVAILABLE TAG
-// ─────────────────────────────────────────────────────────────────────────────
-class _AvailableTag extends StatelessWidget {
+// ─── Available tag ────────────────────────────────────────────────────────────
+class _AvailTag extends StatelessWidget {
+  final Rsp r;
+  const _AvailTag({required this.r});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: EdgeInsets.symmetric(
+          horizontal: r.sp(14), vertical: r.sp(6)),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.accent.withOpacity(0.45)),
+        border: Border.all(color: AppColors.accent.withOpacity(0.4)),
         borderRadius: BorderRadius.circular(6),
         color: AppColors.accent.withOpacity(0.07),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _PulsingDot(color: AppColors.accent, size: 7),
-          const SizedBox(width: 8),
-          Text(
-            'AVAILABLE FOR HIRE',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2.2,
-              color: AppColors.accent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PULSING DOT
-// ─────────────────────────────────────────────────────────────────────────────
-class _PulsingDot extends StatefulWidget {
-  final Color color;
-  final double size;
-  const _PulsingDot({
-    this.color = AppColors.accent,
-    this.size = 8,
-  });
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => Container(
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: widget.color.withOpacity(0.3 + _ctrl.value * 0.5),
-              blurRadius: 4 + _ctrl.value * 8,
-              spreadRadius: _ctrl.value * 2,
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BLINKING CURSOR
-// ─────────────────────────────────────────────────────────────────────────────
-class _BlinkingCursor extends StatefulWidget {
-  @override
-  State<_BlinkingCursor> createState() => _BlinkingCursorState();
-}
-
-class _BlinkingCursorState extends State<_BlinkingCursor>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 530),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => Opacity(
-        opacity: _ctrl.value,
-        child: Text(
-          '|',
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 18,
-            color: AppColors.accent,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const PulsingDot(size: 7),
+        const SizedBox(width: 8),
+        Text('AVAILABLE FOR HIRE',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: r.fs(10.5),
             fontWeight: FontWeight.w700,
+            letterSpacing: 2.2,
+            color: AppColors.accent,
           ),
         ),
-      ),
+      ]),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STATS ROW — with count-up numbers
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Stats row ────────────────────────────────────────────────────────────────
 class _StatsRow extends StatelessWidget {
-  final bool isMobile;
-  const _StatsRow({required this.isMobile});
+  final Rsp r;
+  final bool centered;
+  const _StatsRow({required this.r, required this.centered});
 
   @override
   Widget build(BuildContext context) {
     final stats = [
-      {'value': '2+', 'label': 'Years Exp.'},
-      {'value': '15+', 'label': 'Projects'},
-      {'value': '10+', 'label': 'Happy Clients'},
+      {'v': '2+',  'l': 'Years Exp.'},
+      {'v': '15+', 'l': 'Projects'},
+      {'v': '10+', 'l': 'Clients'},
     ];
-
     return Wrap(
-      spacing: 0,
-      runSpacing: 20,
-      alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-      children: stats.asMap().entries.map((entry) {
-        final i = entry.key;
-        final stat = entry.value;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (i > 0)
-              Container(
-                width: 1,
-                height: 38,
+      alignment: centered ? WrapAlignment.center : WrapAlignment.start,
+      spacing: 0, runSpacing: 16,
+      children: stats.asMap().entries.map((e) {
+        final i = e.key;
+        return Row(mainAxisSize: MainAxisSize.min, children: [
+          if (i > 0)
+            Container(width: 1, height: 36,
                 color: AppColors.border,
-                margin: const EdgeInsets.symmetric(horizontal: 24),
+                margin: EdgeInsets.symmetric(horizontal: r.sp(22))),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            GradientText(e.value['v']!,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(28),
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
               ),
-            _CountUpStat(
-              value: stat['value']!,
-              label: stat['label']!,
-              delay: i * 150,
+              colors: const [AppColors.primary, AppColors.secondary],
             ),
-          ],
-        );
+            Text(e.value['l']!,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(11),
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ]),
+        ]);
       }).toList(),
     );
   }
 }
 
-class _CountUpStat extends StatelessWidget {
-  final String value;
-  final String label;
-  final int delay;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+class _GlowBlob extends StatelessWidget {
+  final Color color;
+  final double size;
+  const _GlowBlob(this.color, this.size);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size, height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+            colors: [color, Colors.transparent]),
+      ),
+    );
+  }
+}
 
-  const _CountUpStat({
-    required this.value,
-    required this.label,
-    required this.delay,
-  });
+class _Badge extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _Badge(this.text, this.color);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.62),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.45)),
+        boxShadow: [BoxShadow(
+            color: color.withOpacity(0.18), blurRadius: 12)],
+      ),
+      child: Text(text,
+          style: GoogleFonts.jetBrainsMono(
+              fontSize: 10, color: color, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+// ─── Particle background (lightweight) ───────────────────────────────────────
+class _ParticleBg extends StatefulWidget {
+  const _ParticleBg();
+  @override State<_ParticleBg> createState() => _ParticleBgState();
+}
+class _ParticleBgState extends State<_ParticleBg>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  final _pts = <_Pt>[];
+
+  @override
+  void initState() {
+    super.initState();
+    final rng = identityHashCode(this);
+    for (int i = 0; i < 55; i++) {
+      _pts.add(_Pt(
+        x: ((rng * (i + 1) * 1234567) % 1000) / 1000,
+        y: ((rng * (i + 2) * 7654321) % 1000) / 1000,
+        sz: 0.5 + ((rng * i * 13) % 100) / 50,
+        spd: 0.04 + ((rng * i * 7) % 100) / 500,
+        op: 0.08 + ((rng * i * 11) % 100) / 350,
+        ci: i % 3,
+      ));
+    }
+    _c = AnimationController(vsync: this,
+        duration: const Duration(seconds: 1))..repeat();
+    _c.addListener(() {
+      for (final p in _pts) {
+        p.y -= p.spd * 0.003;
+        if (p.y < 0) p.y = 1.0;
+      }
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override void dispose() { _c.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GradientText(
-          value,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 30,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1,
-          ),
-          colors: const [AppColors.primary, AppColors.secondary],
-        )
-            .animate(delay: Duration(milliseconds: delay))
-            .fadeIn(duration: 500.ms)
-            .scale(
-          begin: const Offset(0.7, 0.7),
-          end: const Offset(1.0, 1.0),
-          curve: Curves.easeOutBack,
-        ),
-        Text(
-          label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
+    return CustomPaint(painter: _PtPainter(_pts),
+        child: const SizedBox.expand());
   }
+}
+
+class _Pt {
+  double x, y, sz, spd, op;
+  int ci;
+  _Pt({required this.x, required this.y, required this.sz,
+    required this.spd, required this.op, required this.ci});
+}
+
+class _PtPainter extends CustomPainter {
+  final List<_Pt> pts;
+  static const _colors = [
+    Color(0xFF00D4FF), Color(0xFF7B2FFF), Color(0xFF00FF88)];
+  _PtPainter(this.pts);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in pts) {
+      canvas.drawCircle(
+        Offset(p.x * size.width, p.y * size.height),
+        p.sz,
+        Paint()
+          ..color = _colors[p.ci].withOpacity(p.op)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
+      );
+    }
+  }
+
+  @override bool shouldRepaint(_PtPainter _) => true;
 }

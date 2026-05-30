@@ -1,345 +1,315 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shaiwi_portfolio/screens/responsive_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/anime_character.dart';
 import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
 
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
-
-  @override
-  State<ContactScreen> createState() => _ContactScreenState();
+  @override State<ContactScreen> createState() => _ContactScreenState();
 }
 
 class _ContactScreenState extends State<ContactScreen> {
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _msgCtrl = TextEditingController();
-  bool _submitted = false;
+  final _name  = TextEditingController();
+  final _email = TextEditingController();
+  final _msg   = TextEditingController();
+  bool _sent   = false;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _msgCtrl.dispose();
+    _name.dispose(); _email.dispose(); _msg.dispose();
     super.dispose();
   }
 
-  void _submit() {
-    if (_nameCtrl.text.isNotEmpty && _emailCtrl.text.isNotEmpty) {
-      setState(() => _submitted = true);
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
+  Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
+  void _submit() {
+    if (_name.text.isNotEmpty && _email.text.isNotEmpty) {
+      setState(() => _sent = true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 768;
-
-    return Stack(
-      children: [
-        Positioned(
-          top: -100,
-          right: -100,
-          child: Container(
-            width: 400,
-            height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ]),
-            ),
-          ),
-        ),
-        SingleChildScrollView(
+    return ResponsiveBuilder(builder: (ctx, r) {
+      return SafeArea(
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 24 : 80,
-            vertical: 60,
-          ),
+              horizontal: r.hPad, vertical: r.vPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SectionTitle(
-                tag: 'GET IN TOUCH',
-                title: 'Let\'s\nConnect',
-                subtitle:
-                'Have a project, a question, or just want to say hi? My inbox is always open.',
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.3, curve: Curves.easeOutCubic),
+              // Header + anime
+              r.sideBySide
+                  ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: SectionHeader(
+                      tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                      subtitle: 'Open to new projects and collaborations.',
+                      titleFs: r.sectionTitleFs,
+                    )),
+                    AnimeCharacter(section: 'contact', size: r.sp(190)),
+                  ])
+                  : Column(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(child: AnimeCharacter(
+                        section: 'contact', size: r.sp(140))),
+                    SizedBox(height: r.sp(18)),
+                    SectionHeader(
+                      tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                      subtitle: 'Open to new projects and collaborations.',
+                      titleFs: r.sectionTitleFs,
+                    ),
+                  ]),
 
-              const SizedBox(height: 56),
+              SizedBox(height: r.sp(44)),
 
-              isMobile
-                  ? Column(
-                children: [
-                  _buildSocialLinks(),
-                  const SizedBox(height: 40),
-                  _buildContactForm(),
-                ],
-              )
-                  : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 4, child: _buildSocialLinks()),
-                  const SizedBox(width: 40),
-                  Expanded(flex: 6, child: _buildContactForm()),
-                ],
-              ),
+              r.sideBySide
+                  ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 4,
+                        child: _SocialLinks(r: r, launch: _launch)),
+                    SizedBox(width: r.sp(32)),
+                    Expanded(flex: 6,
+                        child: _sent
+                            ? _Thanks(r: r)
+                            : _Form(r: r,
+                            name: _name, email: _email,
+                            msg: _msg, onSubmit: _submit)),
+                  ])
+                  : Column(children: [
+                _SocialLinks(r: r, launch: _launch),
+                SizedBox(height: r.sp(28)),
+                _sent
+                    ? _Thanks(r: r)
+                    : _Form(r: r,
+                    name: _name, email: _email,
+                    msg: _msg, onSubmit: _submit),
+              ]),
             ],
           ),
         ),
-      ],
-    );
+      );
+    });
   }
+}
 
-  Widget _buildSocialLinks() {
+class _SocialLinks extends StatelessWidget {
+  final Rsp r;
+  final Future<void> Function(String) launch;
+  const _SocialLinks({required this.r, required this.launch});
+
+  @override
+  Widget build(BuildContext context) {
     final links = [
-      {
-        'icon': Icons.email_outlined,
-        'label': 'Email',
-        'value': PortfolioData.email,
-        'color': AppColors.primary,
-        'url': 'mailto:${PortfolioData.email}',
-      },
-      {
-        'icon': Icons.code,
-        'label': 'GitHub',
-        'value': '@shaiwi_code',
-        'color': AppColors.secondary,
-        'url': PortfolioData.github,
-      },
-      {
-        'icon': Icons.business_center_outlined,
-        'label': 'LinkedIn',
-        'value': 'Shawaiz Niamat',
-        'color': AppColors.primary,
-        'url': PortfolioData.linkedin,
-      },
-      {
-        'icon': Icons.camera_alt_outlined,
-        'label': 'Instagram',
-        'value': '@shaiwi_code',
-        'color': AppColors.accent,
-        'url': PortfolioData.instagram,
-      },
+      {'icon': Icons.email_outlined, 'label': 'Email',
+        'val': PortfolioData.email, 'c': AppColors.primary,
+        'url': 'mailto:${PortfolioData.email}'},
+      {'icon': Icons.code, 'label': 'GitHub',
+        'val': 'SHAIVI153', 'c': AppColors.textPrimary,
+        'url': PortfolioData.github},
+      {'icon': Icons.camera_alt_outlined, 'label': 'Instagram',
+        'val': 'shawaiz._.niamat', 'c': const Color(0xFFE1306C),
+        'url': PortfolioData.instagram},
+      {'icon': Icons.business_center_outlined, 'label': 'LinkedIn',
+        'val': 'Shawaiz Niamat', 'c': const Color(0xFF0077B5),
+        'url': PortfolioData.linkedin},
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: links.asMap().entries.map((entry) {
-        final i = entry.key;
-        final link = entry.value;
-        final color = link['color'] as Color;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: GestureDetector(
-            onTap: () => _launchUrl(link['url'] as String),
-            child: NeonCard(
-              glowColor: color,
-              padding: const EdgeInsets.all(20),
-              child: Row(
+    return Column(children: links.asMap().entries.map((e) {
+      final i = e.key;
+      final lk = e.value;
+      final c = lk['c'] as Color;
+      return Padding(
+        padding: EdgeInsets.only(bottom: r.sp(12)),
+        child: GestureDetector(
+          onTap: () => launch(lk['url'] as String),
+          child: NeonCard(
+            glowColor: c,
+            padding: EdgeInsets.all(r.sp(16)),
+            child: Row(children: [
+              Container(
+                width: r.sp(42), height: r.sp(42),
+                decoration: BoxDecoration(
+                  color: c.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: c.withOpacity(0.3)),
+                ),
+                child: Icon(lk['icon'] as IconData,
+                    color: c, size: r.sp(18)),
+              ),
+              SizedBox(width: r.sp(14)),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withOpacity(0.3)),
-                    ),
-                    child: Icon(
-                      link['icon'] as IconData,
-                      color: color,
-                      size: 20,
+                  Text(lk['label'] as String,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: r.fs(10.5),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        link['label'] as String,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      Text(
-                        link['value'] as String,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+                  Text(lk['val'] as String,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: r.fs(13.5),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward_ios,
-                      color: color.withOpacity(0.5), size: 14),
                 ],
-              ),
-            ),
-          )
-              .animate(delay: (i * 100).ms)
-              .fadeIn(duration: 400.ms)
-              .slideX(begin: -0.1, curve: Curves.easeOutCubic),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildContactForm() {
-    if (_submitted) {
-      return Container(
-        padding: const EdgeInsets.all(48),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withOpacity(0.1),
-              blurRadius: 30,
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.accent.withOpacity(0.4)),
-              ),
-              child: const Icon(Icons.check_rounded,
-                  color: AppColors.accent, size: 36),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Message Sent!',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Thanks for reaching out. I'll get back to you within 24 hours.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 15,
-                color: AppColors.textSecondary,
-                height: 1.6,
-              ),
-            ),
-          ],
-        ),
-      ).animate().fadeIn(duration: 500.ms).scale(
-        begin: const Offset(0.9, 0.9),
-        curve: Curves.easeOutBack,
+              )),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  color: c.withOpacity(0.4), size: r.sp(12)),
+            ]),
+          ),
+        )
+            .animate(delay: (i * 90).ms)
+            .fadeIn(duration: 380.ms)
+            .slideX(begin: -0.08, curve: Curves.easeOutCubic),
       );
-    }
+    }).toList());
+  }
+}
 
+class _Form extends StatelessWidget {
+  final Rsp r;
+  final TextEditingController name, email, msg;
+  final VoidCallback onSubmit;
+  const _Form({required this.r, required this.name,
+    required this.email, required this.msg, required this.onSubmit});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(36),
+      padding: EdgeInsets.all(r.sp(28)),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Send a Message',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Send a Message',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: r.fs(18),
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
           ),
-          const SizedBox(height: 28),
-          _buildTextField('Your Name', _nameCtrl, Icons.person_outline),
-          const SizedBox(height: 16),
-          _buildTextField('Email Address', _emailCtrl, Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress),
-          const SizedBox(height: 16),
-          _buildTextField('Your Message', _msgCtrl, Icons.message_outlined,
-              maxLines: 5),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: GlowButton(
-              label: 'SEND MESSAGE',
-              onTap: _submit,
-              color: AppColors.primary,
-            ),
+        ),
+        SizedBox(height: r.sp(22)),
+        _field('Your Name', name, Icons.person_outline, r),
+        SizedBox(height: r.sp(14)),
+        _field('Email Address', email, Icons.email_outlined, r,
+            type: TextInputType.emailAddress),
+        SizedBox(height: r.sp(14)),
+        _field('Your Message', msg, Icons.message_outlined, r,
+            maxLines: 4),
+        SizedBox(height: r.sp(20)),
+        SizedBox(
+          width: double.infinity,
+          child: GlowButton(
+            label: 'SEND MESSAGE',
+            onTap: onSubmit,
+            color: AppColors.primary,
+            fontSize: r.fs(12),
           ),
-        ],
-      ),
+        ),
+      ]),
     )
         .animate(delay: 200.ms)
-        .fadeIn(duration: 500.ms)
-        .slideX(begin: 0.1, curve: Curves.easeOutCubic);
+        .fadeIn(duration: 400.ms)
+        .slideX(begin: 0.06, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildTextField(
-      String hint,
-      TextEditingController controller,
-      IconData icon, {
-        int maxLines = 1,
-        TextInputType? keyboardType,
-      }) {
+  Widget _field(String hint, TextEditingController ctrl,
+      IconData icon, Rsp r, {
+        int maxLines = 1, TextInputType? type}) {
     return TextField(
-      controller: controller,
+      controller: ctrl,
       maxLines: maxLines,
-      keyboardType: keyboardType,
+      keyboardType: type,
       style: GoogleFonts.spaceGrotesk(
-        fontSize: 15,
-        color: AppColors.textPrimary,
-      ),
+          fontSize: r.fs(13.5), color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.spaceGrotesk(
-          color: AppColors.textSecondary.withOpacity(0.5),
-          fontSize: 15,
-        ),
+            color: AppColors.textSecondary.withOpacity(0.45),
+            fontSize: r.fs(13.5)),
         prefixIcon: maxLines == 1
-            ? Icon(icon, color: AppColors.textSecondary.withOpacity(0.5), size: 20)
+            ? Icon(icon, color: AppColors.textSecondary.withOpacity(0.45),
+            size: r.sp(18))
             : null,
         filled: true,
         fillColor: AppColors.surface,
+        contentPadding: EdgeInsets.all(r.sp(14)),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: AppColors.border)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: AppColors.border)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.all(16),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+                color: AppColors.primary, width: 1.5)),
       ),
     );
+  }
+}
+
+class _Thanks extends StatelessWidget {
+  final Rsp r;
+  const _Thanks({required this.r});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(r.sp(40)),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        boxShadow: [BoxShadow(
+            color: AppColors.accent.withOpacity(0.08), blurRadius: 28)],
+      ),
+      child: Column(children: [
+        Container(
+          width: r.sp(64), height: r.sp(64),
+          decoration: BoxDecoration(
+            color: AppColors.accent.withOpacity(0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+          ),
+          child: Icon(Icons.check_rounded,
+              color: AppColors.accent, size: r.sp(30)),
+        ),
+        SizedBox(height: r.sp(20)),
+        Text('Message Sent!',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: r.fs(22),
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: r.sp(8)),
+        Text("I'll get back to you within 24 hours.",
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: r.fs(13.5),
+            color: AppColors.textSecondary, height: 1.65,
+          ),
+        ),
+      ]),
+    ).animate().fadeIn(duration: 450.ms)
+        .scale(begin: const Offset(0.92, 0.92),
+        curve: Curves.easeOutBack);
   }
 }

@@ -216,7 +216,7 @@ class _ProjectCardState extends State<_ProjectCard>
                           spacing: 6,
                           runSpacing: 4,
                           children: (project['tags'] as List<String>)
-                              .map((t) => SkillTag(label: t, color: color))
+                              .map((t) => SkillTag(label: t, color: color.blue))
                               .toList(),
                         ),
                       ],

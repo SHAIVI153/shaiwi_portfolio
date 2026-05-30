@@ -1,6 +1,6 @@
 name: shaiwi_portfolio
-description: Shawaiz Niamat - Flutter & Web Developer Portfolio
-publish_to: 'none'
+description: Shawaiz Niamat — Flutter Developer Portfolio
+publish_to: none
 version: 1.0.0+1
 
 environment:
@@ -9,26 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Animations & 3D
-  animate_do: ^3.3.4
   flutter_animate: ^4.5.0
-  rive: ^0.13.0
-  # Navigation
-  go_router: ^13.2.0
-  # UI
   google_fonts: ^6.2.1
-  flutter_svg: ^2.0.10
-  cached_network_image: ^3.3.1
-  # Particles / visual effects
-  particles_flutter: ^2.0.2
-  # Scroll effects
-  scrollable_positioned_list: ^0.3.8
-  # URL launcher
   url_launcher: ^6.2.6
-  # Icons
-  font_awesome_flutter: ^10.7.0
-  # 3D transform
-  vector_math: ^2.1.4
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:

@@ -20,24 +20,28 @@ class PortfolioData {
       'category': 'Mobile Development',
       'icon': '📱',
       'color': 0xFF00D4FF,
+      'proficiency': 0.92,
       'items': ['Flutter', 'Dart', 'State Management', 'Firebase', 'REST APIs', 'GetX / Riverpod'],
     },
     {
       'category': 'Web Development',
       'icon': '🌐',
       'color': 0xFF7B2FFF,
+      'proficiency': 0.85,
       'items': ['HTML5', 'CSS3', 'JavaScript', 'Bootstrap', 'Responsive Design', 'WebFlow'],
     },
     {
       'category': 'Backend & Database',
       'icon': '🗄️',
       'color': 0xFF00FF88,
+      'proficiency': 0.78,
       'items': ['MySQL', 'Firebase Firestore', 'REST API Integration', 'Node.js Basics'],
     },
     {
       'category': 'SEO & Marketing',
       'icon': '📈',
       'color': 0xFFFF6B35,
+      'proficiency': 0.88,
       'items': ['On-Page SEO', 'Technical SEO', 'Digital Marketing', 'Analytics', 'Content Strategy'],
     },
   ];
