@@ -70,8 +70,11 @@ class _CVScreenState extends State<CVScreen> {
         ),
 
         SingleChildScrollView(
+          controller: widget.scrollController,
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 24 : 80,
+            horizontal: isMobile ? 18 : 80,
             vertical: 60,
           ),
           child: Column(

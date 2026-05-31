@@ -9,8 +9,10 @@ import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
 import '../widgets/anime_character.dart';
 
+
 class SkillsScreen extends StatefulWidget {
-  const SkillsScreen({super.key});
+  final ScrollController? scrollController;
+  const SkillsScreen({super.key, this.scrollController});
   @override State<SkillsScreen> createState() => _SkillsScreenState();
 }
 
@@ -53,36 +55,32 @@ class _SkillsScreenState extends State<SkillsScreen> {
                         AppColors.secondary.withOpacity(0.06),
                         Colors.transparent])))),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.hPad, vertical: r.vPad),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Header row: title + anime char
-                  _buildHeader(r),
-                  SizedBox(height: r.sp(36)),
-
-                  // ── Keyboard hint
-                  _KeyHint(r: r),
-                  SizedBox(height: r.sp(20)),
-
-                  // ── Category tabs
-                  _buildTabs(r),
-                  SizedBox(height: r.sp(24)),
-
-                  // ── Detail card (animated switch)
-                  _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
-                  SizedBox(height: r.sp(36)),
-
-                  // ── Grid of all skills
-                  _buildGrid(r),
-                  SizedBox(height: r.sp(20)),
-                ],
+          CustomScrollView(
+            controller: widget.scrollController,
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: r.hPad, vertical: r.vPad),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildHeader(r),
+                    SizedBox(height: r.sp(36)),
+                    _KeyHint(r: r),
+                    SizedBox(height: r.sp(20)),
+                    _buildTabs(r),
+                    SizedBox(height: r.sp(24)),
+                    _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
+                    SizedBox(height: r.sp(36)),
+                    _buildGrid(r),
+                    SizedBox(height: r.sp(60)),
+                    _SkillsFooter(r: r),
+                    SizedBox(height: r.sp(32)),
+                  ]),
+                ),
               ),
-            ),
+            ],
           ),
         ]);
       }),
@@ -219,7 +217,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                                 color: c.withOpacity(0.6), blurRadius: 6)])),
                   ]),
                   SizedBox(height: r.sp(12)),
-                  _Bar(v: (sk['proficiency'] as double? ?? 0.8), c: c, h: 4.5),
+                  _Bar(v: sk['proficiency'] as double, c: c, h: 4.5),
                   SizedBox(height: r.sp(12)),
                   Wrap(spacing: 5, runSpacing: 5,
                     children: (sk['items'] as List<String>)
@@ -273,7 +271,7 @@ class _DetailCard extends StatelessWidget {
   Widget _buildCard() {
     final c = Color(skill['color'] as int);
     final items = skill['items'] as List<String>;
-    final prof = skill['proficiency'] as double? ?? 0.8;
+    final prof = skill['proficiency'] as double;
 
     return Container(
       width: double.infinity,
@@ -447,6 +445,34 @@ class _Key extends StatelessWidget {
           style: GoogleFonts.jetBrainsMono(
               fontSize: r.fs(12), color: AppColors.textPrimary,
               fontWeight: FontWeight.w700)),
+    );
+  }
+}
+// ── Skills Footer ─────────────────────────────────────────────────────────────
+class _SkillsFooter extends StatelessWidget {
+  final Rsp r;
+  const _SkillsFooter({required this.r});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: r.sp(24)),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GradientText('shaiwi_code',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(14), fontWeight: FontWeight.w900),
+            colors: const [AppColors.primary, AppColors.secondary],
+          ),
+          Text('© 2025 Shawaiz Niamat',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(11), color: AppColors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 }

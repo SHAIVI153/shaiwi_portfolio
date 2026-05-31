@@ -6,15 +6,17 @@ import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
-import '../widgets/anime_character.dart';
+
 
 class HomeScreen extends StatelessWidget {
   final VoidCallback onContactTap;
   final VoidCallback onProjectsTap;
+  final ScrollController? scrollController;
   const HomeScreen({
     super.key,
     required this.onContactTap,
     required this.onProjectsTap,
+    this.scrollController,
   });
 
   @override
@@ -31,19 +33,30 @@ class HomeScreen extends StatelessWidget {
           Positioned(bottom: -120, right: -80,
               child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.hPad, vertical: r.vPad),
-              child: r.sideBySide
-                  ? _DesktopHero(r: r,
-                  onContact: onContactTap,
-                  onProjects: onProjectsTap)
-                  : _MobileHero(r: r,
-                  onContact: onContactTap,
-                  onProjects: onProjectsTap),
-            ),
+          CustomScrollView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: r.hPad, vertical: r.vPad),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    r.sideBySide
+                        ? _DesktopHero(r: r,
+                        onContact: onContactTap,
+                        onProjects: onProjectsTap)
+                        : _MobileHero(r: r,
+                        onContact: onContactTap,
+                        onProjects: onProjectsTap),
+                    SizedBox(height: r.sp(60)),
+                    _HomeFooter(r: r),
+                    SizedBox(height: r.sp(32)),
+                  ]),
+                ),
+              ),
+            ],
           ),
         ],
       );
@@ -73,7 +86,7 @@ class _DesktopHero extends StatelessWidget {
   }
 }
 
-// ─── Mobile: card top, text below — same look as desktop just stacked ─────────
+// ─── Mobile: text LEFT, profile card RIGHT ────────────────────────────────────
 class _MobileHero extends StatelessWidget {
   final Rsp r;
   final VoidCallback onContact;
@@ -83,13 +96,15 @@ class _MobileHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(child: _ProfileCard(r: r)),
-        SizedBox(height: r.sp(36)),
-        _HeroText(r: r, onContact: onContact,
-            onProjects: onProjects, centered: true),
+        Expanded(
+          flex: 55,
+          child: _HeroText(r: r, onContact: onContact, onProjects: onProjects),
+        ),
+        SizedBox(width: r.sp(14)),
+        _ProfileCard(r: r),
       ],
     );
   }
@@ -673,4 +688,32 @@ class _PtPainter extends CustomPainter {
   }
 
   @override bool shouldRepaint(_PtPainter _) => true;
+}
+// ── Home Footer ────────────────────────────────────────────────────────────────
+class _HomeFooter extends StatelessWidget {
+  final Rsp r;
+  const _HomeFooter({required this.r});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: r.sp(24)),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GradientText('shaiwi_code',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(14), fontWeight: FontWeight.w900),
+            colors: const [AppColors.primary, AppColors.secondary],
+          ),
+          Text('Flutter & Web Developer',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: r.fs(11), color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
 }
