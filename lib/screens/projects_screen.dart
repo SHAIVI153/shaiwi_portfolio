@@ -42,10 +42,9 @@ class ProjectsScreen extends StatelessWidget {
         ),
         SingleChildScrollView(
           controller: scrollController,
-          physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 16 : 80,
+            horizontal: isMobile ? 24 : 80,
             vertical: 60,
           ),
           child: Column(
@@ -433,6 +432,8 @@ class _ProjectCardState extends State<_ProjectCard>
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                      isAntiAlias: true,
                       errorBuilder: (_, __, ___) => Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -506,6 +507,8 @@ class _ProjectCardState extends State<_ProjectCard>
                         child: Image.asset(
                           screenshots[i],
                           fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                          isAntiAlias: true,
                           errorBuilder: (_, __, ___) => Container(
                             color: AppColors.surface,
                             child: Center(

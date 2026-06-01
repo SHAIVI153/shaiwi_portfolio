@@ -1,19 +1,50 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+//  main.dart  — Professional Webflow-style Scroll Portfolio
+//
+//  Architecture:
+//  • ONE continuous CustomScrollView — all 6 sections stacked vertically
+//  • Parallax layers (SliverParallax via Transform + ScrollController)
+//  • Scroll-driven nav highlight (detects which section is in viewport)
+//  • Sticky navbar via SliverPersistentHeader
+//  • Scroll-reveal animations per section (flutter_animate + visibility check)
+//  • Smooth scrollTo() on nav tap
+//  • Mouse-wheel / trackpad / touch on web+mobile
+//  • Drawer on mobile, top sticky nav on tablet/desktop
+//  • No pixel rendering (FilterQuality.high everywhere)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import 'dart:math' as math;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shaiwi_portfolio/screens/contact_screen.dart';
-import 'package:shaiwi_portfolio/screens/cv_screen.dart';
-import 'package:shaiwi_portfolio/screens/home_screen.dart';
-import 'package:shaiwi_portfolio/screens/projects_screen.dart';
-import 'package:shaiwi_portfolio/screens/responsive_screen.dart';
-import 'package:shaiwi_portfolio/screens/services_screen.dart';
-import 'package:shaiwi_portfolio/screens/skills_screen.dart';
-import '../widgets/app_theme.dart';
-import '../widgets/common_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'firebase_options.dart';
+import 'widgets/app_theme.dart';
+import 'widgets/common_widgets.dart';
+import 'screens/responsive_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/skills_screen.dart';
+import 'screens/projects_screen.dart';
+import 'screens/services_screen.dart';
+import 'screens/cv_screen.dart';
+import 'screens/contact_screen.dart';
 
-void main() {
+// ─── Entry ────────────────────────────────────────────────────────────────────
+Future<void> main() async {
+   {
+    // 3. Ensure karein ke binding initialize ho chuki hai
+    WidgetsFlutterBinding.ensureInitialized();
+
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -21,9 +52,9 @@ void main() {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFF050A0F),
+    statusBarColor:                    Colors.transparent,
+    statusBarIconBrightness:           Brightness.light,
+    systemNavigationBarColor:          Color(0xFF050A0F),
     systemNavigationBarIconBrightness: Brightness.light,
   ));
   runApp(const App());
@@ -34,18 +65,17 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'shaiwi_code | Flutter Developer',
+      title:                     'shaiwi_code | Flutter Developer',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      home: const Shell(),
-      scrollBehavior: const _WebScrollBehavior(),
+      theme:                     AppTheme.dark,
+      home:                      const Shell(),
+      scrollBehavior:            _AllDeviceScrollBehavior(),
     );
   }
 }
 
-// Enable mouse + touch + trackpad scroll on web
-class _WebScrollBehavior extends ScrollBehavior {
-  const _WebScrollBehavior();
+/// Enables mouse + touch + trackpad scrolling on all platforms
+class _AllDeviceScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
     PointerDeviceKind.touch,
@@ -58,21 +88,19 @@ class _WebScrollBehavior extends ScrollBehavior {
       const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }
 
-// ─── Nav data ──────────────────────────────────────────────────────────────────
-class _NavItem {
-  final String label;
-  final IconData icon;
-  final IconData iconOn;
-  const _NavItem(this.label, this.icon, this.iconOn);
+// ─── Nav config ───────────────────────────────────────────────────────────────
+class _N {
+  final String  label;
+  final IconData icon, iconOn;
+  const _N(this.label, this.icon, this.iconOn);
 }
-
-const _navItems = [
-  _NavItem('Home',     Icons.home_outlined,           Icons.home_rounded),
-  _NavItem('Skills',   Icons.code_outlined,            Icons.code_rounded),
-  _NavItem('Projects', Icons.work_outline,             Icons.work_rounded),
-  _NavItem('Services', Icons.design_services_outlined, Icons.design_services_rounded),
-  _NavItem('CV',       Icons.download_outlined,        Icons.download_rounded),
-  _NavItem('Contact',  Icons.mail_outline,             Icons.mail_rounded),
+const _nav = [
+  _N('Home',     Icons.home_outlined,            Icons.home_rounded),
+  _N('Skills',   Icons.code_outlined,            Icons.code_rounded),
+  _N('Projects', Icons.work_outline,             Icons.work_rounded),
+  _N('Services', Icons.design_services_outlined, Icons.design_services_rounded),
+  _N('CV',       Icons.download_outlined,        Icons.download_rounded),
+  _N('Contact',  Icons.mail_outline,             Icons.mail_rounded),
 ];
 
 // ─── Shell ─────────────────────────────────────────────────────────────────────
@@ -83,90 +111,526 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  int _idx = 0;
-  final List<ScrollController> _scrollCtrls =
-  List.generate(6, (_) => ScrollController());
+  // Single scroll controller for the entire page
+  final ScrollController _scroll = ScrollController();
+
+  // One GlobalKey per section so we can measure offsets
+  final List<GlobalKey> _keys = List.generate(6, (_) => GlobalKey());
+
+  // Currently active nav index (updated by scroll listener)
+  int _activeIdx = 0;
+
+  // Navbar height (set after first build via ResponsiveBuilder)
+  double _navH = 64;
+
+  // Parallax offset (driven by _scroll)
+  double _scrollY = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
-    for (final c in _scrollCtrls) c.dispose();
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
     super.dispose();
   }
 
-  void _go(int i) {
-    // Close drawer if open
-    final nav = Navigator.of(context);
-    if (nav.canPop()) nav.pop();
+  // ── Scroll listener: update active nav + parallax value ────────────────────
+  void _onScroll() {
+    final offset = _scroll.offset;
+    setState(() => _scrollY = offset);
 
-    if (_idx == i) {
-      final ctrl = _scrollCtrls[i];
-      if (ctrl.hasClients && ctrl.offset > 0) {
-        ctrl.animateTo(0,
-            duration: const Duration(milliseconds: 450),
-            curve: Curves.easeOutCubic);
+    // Find which section occupies the centre of the viewport
+    final viewH     = _scroll.position.viewportDimension;
+    final centre    = offset + viewH * 0.38; // 38 % from top = natural focus
+
+    for (int i = _keys.length - 1; i >= 0; i--) {
+      final ctx = _keys[i].currentContext;
+      if (ctx == null) continue;
+      final box    = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final topAbs = box.localToGlobal(Offset.zero).dy + offset - _navH;
+      if (centre >= topAbs) {
+        if (_activeIdx != i) setState(() => _activeIdx = i);
+        break;
       }
-    } else {
-      setState(() => _idx = i);
     }
   }
 
-  Widget _buildPage(int i) {
-    final sc = _scrollCtrls[i];
-    switch (i) {
-      case 0: return HomeScreen(
-          scrollController: sc,
-          onContactTap: () => _go(5),
-          onProjectsTap: () => _go(2));
-      case 1: return SkillsScreen(scrollController: sc);
-      case 2: return ProjectsScreen(scrollController: sc);
-      case 3: return ServicesScreen(scrollController: sc, onHireTap: () => _go(5));
-      case 4: return CVScreen(scrollController: sc);
-      case 5: return ContactScreen(scrollController: sc);
-      default: return const SizedBox.shrink();
-    }
+  // ── Scroll to section ───────────────────────────────────────────────────────
+  void _scrollTo(int idx) {
+    final ctx = _keys[idx].currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration:  const Duration(milliseconds: 780),
+      curve:     Curves.easeInOutCubic,
+      alignment: 0.0,           // top-align (parallax header shows fully)
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
+      _navH = r.isMobile ? 52 : 64;
+
       return Scaffold(
         backgroundColor: AppColors.background,
-        drawer: r.isMobile ? _NavDrawer(idx: _idx, go: _go) : null,
+        drawer: r.isMobile
+            ? _NavDrawer(idx: _activeIdx, go: _scrollTo)
+            : null,
         body: SafeArea(
           bottom: false,
           child: Column(children: [
-            // Top bar
-            r.isMobile
-                ? _MobileTopBar(idx: _idx)
-                : _TopNav(idx: _idx, go: _go, r: r),
 
-            // Page
+            // ── Sticky navbar
+            r.isMobile
+                ? _MobileTopBar(idx: _activeIdx)
+                : _StickyTopNav(idx: _activeIdx, go: _scrollTo, r: r),
+
+            // ── Single scrollable canvas
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: CurvedAnimation(
-                      parent: anim, curve: Curves.easeOut),
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0, 0.02),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                        parent: anim, curve: Curves.easeOutCubic)),
-                    child: child,
-                  ),
-                ),
-                child: KeyedSubtree(
-                    key: ValueKey(_idx), child: _buildPage(_idx)),
+              child: _ScrollCanvas(
+                scrollCtrl: _scroll,
+                scrollY:    _scrollY,
+                sectionKeys: _keys,
+                activeIdx:  _activeIdx,
+                onHireTap:  () => _scrollTo(5),
+                onContactTap: () => _scrollTo(5),
+                onProjectsTap: () => _scrollTo(2),
               ),
             ),
 
-            // Bottom nav (mobile)
-            if (r.isMobile) _BottomNav(idx: _idx, go: _go),
+            // ── Mobile bottom nav
+            if (r.isMobile)
+              _BottomNav(idx: _activeIdx, go: _scrollTo),
           ]),
         ),
       );
     });
+  }
+}
+
+// ─── Single scroll canvas (all sections) ─────────────────────────────────────
+class _ScrollCanvas extends StatelessWidget {
+  final ScrollController scrollCtrl;
+  final double           scrollY;
+  final List<GlobalKey>  sectionKeys;
+  final int              activeIdx;
+  final VoidCallback     onHireTap;
+  final VoidCallback     onContactTap;
+  final VoidCallback     onProjectsTap;
+
+  const _ScrollCanvas({
+    required this.scrollCtrl,
+    required this.scrollY,
+    required this.sectionKeys,
+    required this.activeIdx,
+    required this.onHireTap,
+    required this.onContactTap,
+    required this.onProjectsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      controller: scrollCtrl,
+      physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics()),
+      slivers: [
+
+        // ─ 0. HOME ─────────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[0],
+          scrollY:    scrollY,
+          parallaxDepth: 0.35,
+          glowColor:  AppColors.primary,
+          child: HomeScreen(
+            onContactTap:  onContactTap,
+            onProjectsTap: onProjectsTap,
+          ),
+        ),
+
+        // ─ Divider
+        _SectionDivider(color: AppColors.primary),
+
+        // ─ 1. SKILLS ───────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[1],
+          scrollY:    scrollY,
+          parallaxDepth: 0.28,
+          glowColor:  AppColors.secondary,
+          child: const SkillsScreen(),
+        ),
+
+        _SectionDivider(color: AppColors.secondary),
+
+        // ─ 2. PROJECTS ─────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[2],
+          scrollY:    scrollY,
+          parallaxDepth: 0.22,
+          glowColor:  AppColors.accent,
+          child: const ProjectsScreen(),
+        ),
+
+        _SectionDivider(color: AppColors.accent),
+
+        // ─ 3. SERVICES ─────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[3],
+          scrollY:    scrollY,
+          parallaxDepth: 0.28,
+          glowColor:  const Color(0xFFFF6B35),
+          child: ServicesScreen(onHireTap: onHireTap),
+        ),
+
+        _SectionDivider(color: Color(0xFFFF6B35)),
+
+        // ─ 4. CV ───────────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[4],
+          scrollY:    scrollY,
+          parallaxDepth: 0.22,
+          glowColor:  AppColors.primary,
+          child: const CVScreen(),
+        ),
+
+        _SectionDivider(color: AppColors.primary),
+
+        // ─ 5. CONTACT ──────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[5],
+          scrollY:    scrollY,
+          parallaxDepth: 0.18,
+          glowColor:  AppColors.accent,
+          child: const ContactScreen(),
+        ),
+
+        // ─ Footer
+        SliverToBoxAdapter(child: _GlobalFooter()),
+      ],
+    );
+  }
+}
+
+// ─── Section Sliver ───────────────────────────────────────────────────────────
+/// Wraps each screen in a SliverToBoxAdapter.
+/// Applies parallax to the background glow blob + scroll-reveal to content.
+class _SectionSliver extends StatefulWidget {
+  final GlobalKey   sectionKey;
+  final Widget      child;
+  final double      scrollY;
+  final double      parallaxDepth;  // 0..1 — how much the bg moves
+  final Color       glowColor;
+
+  const _SectionSliver({
+    required this.sectionKey,
+    required this.child,
+    required this.scrollY,
+    required this.parallaxDepth,
+    required this.glowColor,
+  });
+
+  @override
+  State<_SectionSliver> createState() => _SectionSliverState();
+}
+
+class _SectionSliverState extends State<_SectionSliver>
+    with SingleTickerProviderStateMixin {
+  bool _revealed = false;
+  late AnimationController _revealCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _revealCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    // Check visibility on first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkVisibility());
+  }
+
+  @override
+  void didUpdateWidget(_SectionSliver old) {
+    super.didUpdateWidget(old);
+    if (!_revealed) _checkVisibility();
+  }
+
+  void _checkVisibility() {
+    final ctx = widget.sectionKey.currentContext;
+    if (ctx == null) return;
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached) return;
+    final pos    = box.localToGlobal(Offset.zero);
+    final screen = MediaQuery.of(context).size.height;
+    if (pos.dy < screen * 1.1) {
+      // Section is in or near viewport
+      setState(() => _revealed = true);
+      _revealCtrl.forward();
+    }
+  }
+
+  // Parallax: the glow blob moves at parallaxDepth of the scroll speed
+  double get _parallaxOffset => widget.scrollY * widget.parallaxDepth * 0.3;
+
+  @override
+  void dispose() {
+    _revealCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Container(
+        key: widget.sectionKey,
+        constraints: const BoxConstraints(minHeight: 0),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // ── Parallax background glow ──────────────────────────────────
+            Positioned(
+              top:  -120 + _parallaxOffset,
+              right: -80,
+              child: IgnorePointer(
+                child: Container(
+                  width: 500, height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(colors: [
+                      widget.glowColor.withOpacity(0.065),
+                      Colors.transparent,
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+            // Parallax secondary glow (bottom-left)
+            Positioned(
+              bottom: -80 - _parallaxOffset * 0.5,
+              left:   -60,
+              child: IgnorePointer(
+                child: Container(
+                  width: 350, height: 350,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(colors: [
+                      widget.glowColor.withOpacity(0.04),
+                      Colors.transparent,
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Scroll-reveal content ─────────────────────────────────────
+            _revealed
+                ? widget.child
+                .animate(controller: _revealCtrl)
+                .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+                .slideY(
+              begin: 0.06, end: 0,
+              duration: 600.ms,
+              curve: Curves.easeOutCubic,
+            )
+                : Opacity(opacity: 0, child: widget.child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Section divider with gradient line ───────────────────────────────────────
+class _SectionDivider extends StatelessWidget {
+  final Color color;
+  const _SectionDivider({required this.color});
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [
+            Colors.transparent,
+            color.withOpacity(0.35),
+            color.withOpacity(0.35),
+            Colors.transparent,
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Global footer ─────────────────────────────────────────────────────────────
+class _GlobalFooter extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: Column(children: [
+        // Logo
+        ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (b) => const LinearGradient(
+              colors: [AppColors.primary, AppColors.secondary])
+              .createShader(b),
+          child: Text('shaiwi_code',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 26, fontWeight: FontWeight.w900,
+                letterSpacing: -1),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text('Flutter & Web Developer',
+          style: GoogleFonts.spaceGrotesk(
+              fontSize: 12, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 20),
+
+        // WhatsApp contact row
+        GestureDetector(
+          onTap: () async {
+            final uri = Uri.parse('https://wa.me/923156434296');
+            if (await canLaunchUrl(uri)) await launchUrl(uri);
+          },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 18, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: const Color(0xFF25D366).withOpacity(0.35)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.phone_rounded,
+                    color: Color(0xFF25D366), size: 16),
+                const SizedBox(width: 8),
+                Text('+92 315 643 4296',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13, fontWeight: FontWeight.w700,
+                    color: Color(0xFF25D366),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text('WhatsApp',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 10, fontWeight: FontWeight.w600,
+                    color: Color(0xFF25D366).withOpacity(0.7),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+        Container(height: 1, color: AppColors.border),
+        const SizedBox(height: 16),
+
+        // Copyright
+        Text('© 2026 shaiwi_code · Made with ❤️ using Flutter',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(
+              fontSize: 11,
+              color: AppColors.textSecondary.withOpacity(0.6)),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─── Sticky top nav (tablet + desktop) ────────────────────────────────────────
+class _StickyTopNav extends StatelessWidget {
+  final int  idx;
+  final void Function(int) go;
+  final Rsp  r;
+  const _StickyTopNav({required this.idx, required this.go, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.background.withOpacity(0.94),
+      child: Container(
+        height: 64,
+        padding: EdgeInsets.symmetric(horizontal: r.hPad),
+        decoration: BoxDecoration(
+          border: const Border(
+              bottom: BorderSide(color: AppColors.border)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.35),
+              blurRadius: 20, offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(children: [
+          // Logo
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (b) => const LinearGradient(
+                colors: [AppColors.primary, AppColors.secondary])
+                .createShader(b),
+            child: Text('shaiwi_code',
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: r.fs(21), fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5),
+            ),
+          ),
+          const Spacer(),
+          ..._nav.asMap().entries.map((e) {
+            final active = idx == e.key;
+            final c = active ? AppColors.primary : AppColors.textSecondary;
+            return GestureDetector(
+              onTap: () => go(e.key),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Container(
+                  margin: EdgeInsets.only(left: r.sp(28)),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(e.value.label,
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: r.fs(13),
+                          fontWeight: active
+                              ? FontWeight.w700 : FontWeight.w500,
+                          color: c),
+                    ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: 220.ms,
+                      height: 2, width: active ? 20 : 0,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(1),
+                        boxShadow: active ? [BoxShadow(
+                            color: AppColors.primary.withOpacity(0.85),
+                            blurRadius: 10)] : [],
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            );
+          }),
+        ]),
+      ),
+    );
   }
 }
 
@@ -182,12 +646,15 @@ class _MobileTopBar extends StatelessWidget {
       child: Container(
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: const BoxDecoration(
-          border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 1)),
+        decoration: BoxDecoration(
+          border: const Border(
+              bottom: BorderSide(color: AppColors.border)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.4),
+                blurRadius: 16, offset: const Offset(0, 2)),
+          ],
         ),
         child: Row(children: [
-          // Hamburger
           Builder(builder: (ctx) => GestureDetector(
             onTap: () => Scaffold.of(ctx).openDrawer(),
             child: Container(
@@ -202,33 +669,39 @@ class _MobileTopBar extends StatelessWidget {
             ),
           )),
           const SizedBox(width: 10),
-          // Logo
           ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (b) => const LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
-            ).createShader(b),
+                colors: [AppColors.primary, AppColors.secondary])
+                .createShader(b),
             child: Text('shaiwi_code',
               style: GoogleFonts.spaceGrotesk(
-                fontSize: 17, fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
+                  fontSize: 17, fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5),
             ),
           ),
           const Spacer(),
-          // Active pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3)),
+          // Animated active section pill
+          AnimatedSwitcher(
+            duration: 200.ms,
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(scale: anim, child: child),
             ),
-            child: Text(_navItems[idx].label,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 10, fontWeight: FontWeight.w700,
-                color: AppColors.primary, letterSpacing: 0.5,
+            child: Container(
+              key: ValueKey(idx),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3)),
+              ),
+              child: Text(_nav[idx].label,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 10, fontWeight: FontWeight.w700,
+                    color: AppColors.primary, letterSpacing: 0.5),
               ),
             ),
           ),
@@ -238,7 +711,7 @@ class _MobileTopBar extends StatelessWidget {
   }
 }
 
-// ─── Drawer ────────────────────────────────────────────────────────────────────
+// ─── Slide Drawer ──────────────────────────────────────────────────────────────
 class _NavDrawer extends StatelessWidget {
   final int idx;
   final void Function(int) go;
@@ -249,25 +722,21 @@ class _NavDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: AppColors.surface,
       width: 272,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 52, 22, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(22, 52, 22, 8),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
                   blendMode: BlendMode.srcIn,
                   shaderCallback: (b) => const LinearGradient(
-                    colors: [AppColors.primary, AppColors.secondary],
-                  ).createShader(b),
+                      colors: [AppColors.primary, AppColors.secondary])
+                      .createShader(b),
                   child: Text('shaiwi_code',
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 22, fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
+                        fontSize: 22, fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -278,177 +747,88 @@ class _NavDrawer extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(children: [
                   Container(
-                    width: 6, height: 6,
+                    width: 7, height: 7,
                     decoration: const BoxDecoration(
                         color: AppColors.accent, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 6),
                   Text('Available for work',
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11, color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                        fontSize: 11, color: AppColors.accent,
+                        fontWeight: FontWeight.w600),
                   ),
                 ]),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Divider(color: AppColors.border, height: 1),
-          ),
-          // Nav items
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              children: _navItems.asMap().entries.map((e) {
-                final active = idx == e.key;
-                return GestureDetector(
-                  onTap: () => go(e.key),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.only(bottom: 3),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 13),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? AppColors.primary.withOpacity(0.1)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+              ]),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          child: Divider(color: AppColors.border, height: 1),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            children: _nav.asMap().entries.map((e) {
+              final active = idx == e.key;
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  go(e.key);
+                },
+                child: AnimatedContainer(
+                  duration: 180.ms,
+                  margin: const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? AppColors.primary.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
                         color: active
                             ? AppColors.primary.withOpacity(0.25)
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Row(children: [
-                      Icon(
-                        active ? e.value.iconOn : e.value.icon,
+                            : Colors.transparent),
+                  ),
+                  child: Row(children: [
+                    Icon(active ? e.value.iconOn : e.value.icon,
                         color: active
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        size: 19,
+                            ? AppColors.primary : AppColors.textSecondary,
+                        size: 19),
+                    const SizedBox(width: 13),
+                    Expanded(child: Text(e.value.label,
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14,
+                          fontWeight: active
+                              ? FontWeight.w700 : FontWeight.w500,
+                          color: active
+                              ? AppColors.primary : AppColors.textPrimary),
+                    )),
+                    if (active)
+                      Container(
+                        width: 6, height: 6,
+                        decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle),
                       ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: Text(e.value.label,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            fontWeight: active
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: active
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      if (active)
-                        Container(
-                          width: 6, height: 6,
-                          decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle),
-                        ),
-                    ]),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Text('© 2025 Shawaiz Niamat',
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11, color: AppColors.textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Top Nav (tablet + desktop) ────────────────────────────────────────────────
-class _TopNav extends StatelessWidget {
-  final int idx;
-  final void Function(int) go;
-  final Rsp r;
-  const _TopNav({required this.idx, required this.go, required this.r});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.background.withOpacity(0.96),
-      child: Container(
-        height: 64,
-        padding: EdgeInsets.symmetric(horizontal: r.hPad),
-        decoration: const BoxDecoration(
-          border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 1)),
-        ),
-        child: Row(children: [
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (b) => const LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
-            ).createShader(b),
-            child: Text('shaiwi_code',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: r.fs(21), fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          const Spacer(),
-          ..._navItems.asMap().entries.map((e) {
-            final active = idx == e.key;
-            final c = active ? AppColors.primary : AppColors.textSecondary;
-            return GestureDetector(
-              onTap: () => go(e.key),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Container(
-                  margin: EdgeInsets.only(left: r.sp(28)),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(e.value.label,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: r.fs(13),
-                          fontWeight:
-                          active ? FontWeight.w700 : FontWeight.w500,
-                          color: c,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        height: 2, width: active ? 18 : 0,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(1),
-                          boxShadow: active
-                              ? [BoxShadow(
-                              color: AppColors.primary.withOpacity(0.8),
-                              blurRadius: 8)]
-                              : [],
-                        ),
-                      ),
-                    ],
-                  ),
+                  ]),
                 ),
-              ),
-            );
-          }),
-        ]),
-      ),
+              );
+            }).toList(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(18),
+          child: Text('© 2025 Shawaiz Niamat',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 11, color: AppColors.textSecondary),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-// ─── Bottom Nav ────────────────────────────────────────────────────────────────
+// ─── Bottom Nav (mobile) ───────────────────────────────────────────────────────
 class _BottomNav extends StatelessWidget {
   final int idx;
   final void Function(int) go;
@@ -460,8 +840,7 @@ class _BottomNav extends StatelessWidget {
       color: AppColors.surface,
       child: Container(
         decoration: const BoxDecoration(
-          border: Border(
-              top: BorderSide(color: AppColors.border, width: 1)),
+          border: Border(top: BorderSide(color: AppColors.border)),
           boxShadow: [BoxShadow(
               color: Colors.black54, blurRadius: 24,
               offset: Offset(0, -4))],
@@ -471,18 +850,17 @@ class _BottomNav extends StatelessWidget {
           child: SizedBox(
             height: 60,
             child: Row(
-              children: _navItems.asMap().entries.map((e) {
+              children: _nav.asMap().entries.map((e) {
                 final i = e.key;
                 final active = idx == i;
                 final c = active
-                    ? AppColors.primary
-                    : AppColors.textSecondary;
+                    ? AppColors.primary : AppColors.textSecondary;
                 return Expanded(
                   child: GestureDetector(
                     onTap: () => go(i),
                     behavior: HitTestBehavior.opaque,
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: 200.ms,
                       margin: const EdgeInsets.symmetric(
                           horizontal: 2, vertical: 5),
                       decoration: BoxDecoration(
@@ -494,19 +872,15 @@ class _BottomNav extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            active ? e.value.iconOn : e.value.icon,
-                            size: 20, color: c,
-                          ),
+                          Icon(active ? e.value.iconOn : e.value.icon,
+                              size: 20, color: c),
                           const SizedBox(height: 2),
                           Text(e.value.label,
                             style: GoogleFonts.spaceGrotesk(
-                              fontSize: 9,
-                              fontWeight: active
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: c,
-                            ),
+                                fontSize: 9,
+                                fontWeight: active
+                                    ? FontWeight.w700 : FontWeight.w500,
+                                color: c),
                           ),
                         ],
                       ),

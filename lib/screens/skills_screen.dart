@@ -48,40 +48,44 @@ class _SkillsScreenState extends State<SkillsScreen> {
       onKeyEvent: _onKey,
       child: ResponsiveBuilder(builder: (ctx, r) {
         return Stack(children: [
-          Positioned(top: 60, right: -160,
-              child: Container(width: 420, height: 420,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
-                      gradient: RadialGradient(colors: [
-                        AppColors.secondary.withOpacity(0.06),
-                        Colors.transparent])))),
+            Positioned(top: 60, right: -160,
+            child: Container(width: 420, height: 420,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                    gradient: RadialGradient(colors: [
+                      AppColors.secondary.withOpacity(0.06),
+                      Colors.transparent])))),
 
-          CustomScrollView(
-            controller: widget.scrollController,
-            physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: r.hPad, vertical: r.vPad),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildHeader(r),
-                    SizedBox(height: r.sp(36)),
-                    _KeyHint(r: r),
-                    SizedBox(height: r.sp(20)),
-                    _buildTabs(r),
-                    SizedBox(height: r.sp(24)),
-                    _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
-                    SizedBox(height: r.sp(36)),
-                    _buildGrid(r),
-                    SizedBox(height: r.sp(60)),
-                    _SkillsFooter(r: r),
-                    SizedBox(height: r.sp(32)),
-                  ]),
-                ),
-              ),
-            ],
-          ),
+        SingleChildScrollView(
+        controller: widget.scrollController,
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.symmetric(
+        horizontal: r.hPad, vertical: r.vPad),
+        child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        // ── Header row: title + anime char
+        _buildHeader(r),
+        SizedBox(height: r.sp(36)),
+
+        // ── Keyboard hint
+        _KeyHint(r: r),
+        SizedBox(height: r.sp(20)),
+
+        // ── Category tabs
+        _buildTabs(r),
+        SizedBox(height: r.sp(24)),
+
+        // ── Detail card (animated switch)
+        _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
+        SizedBox(height: r.sp(36)),
+
+        // ── Grid of all skills
+        _buildGrid(r),
+        SizedBox(height: r.sp(20)),
+        ],
+        ),
+        ),
+
         ]);
       }),
     );
@@ -445,34 +449,6 @@ class _Key extends StatelessWidget {
           style: GoogleFonts.jetBrainsMono(
               fontSize: r.fs(12), color: AppColors.textPrimary,
               fontWeight: FontWeight.w700)),
-    );
-  }
-}
-// ── Skills Footer ─────────────────────────────────────────────────────────────
-class _SkillsFooter extends StatelessWidget {
-  final Rsp r;
-  const _SkillsFooter({required this.r});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: r.sp(24)),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GradientText('shaiwi_code',
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: r.fs(14), fontWeight: FontWeight.w900),
-            colors: const [AppColors.primary, AppColors.secondary],
-          ),
-          Text('© 2025 Shawaiz Niamat',
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: r.fs(11), color: AppColors.textSecondary),
-          ),
-        ],
-      ),
     );
   }
 }

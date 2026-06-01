@@ -6,42 +6,47 @@ class PortfolioData {
   static const String bio =
       'I\'m a passionate Flutter & Web Developer who turns ideas into beautiful, high-performance digital experiences. Specializing in cross-platform mobile apps, responsive web solutions, and SEO-driven digital marketing strategies.';
 
-  static const String email = 'shawaiz@shaiwi.dev';
-  static const String github = 'https://github.com/shaiwi_code';
-  static const String linkedin = 'https://linkedin.com/in/shawaiz-niamat';
-  static const String instagram = 'https://instagram.com/shaiwi_code';
+  static const String email     = 'shawaizengg454@gmail.com';
+  static const String github    = 'https://github.com/SHAIVI153';
+  static const String linkedin  = 'https://linkedin.com/in/shawaiz-niamat';
+  static const String instagram = 'https://instagram.com/shawaiz._.niamat';
+  static const String facebook  = 'https://facebook.com/shawaiz.niamat';
+  static const String whatsapp  = 'https://wa.me/923156434296';
 
-  // ── CV download URL (put your Google Drive / Dropbox direct link here)
+  // ── CV URLs
   static const String cvDownloadUrl =
-      'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID';
+      'https://drive.google.com/uc?export=download&id=11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9';
+
+  static const String cvPreviewUrl =
+      'https://drive.google.com/file/d/11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9/view';
 
   static const List<Map<String, dynamic>> skills = [
     {
       'category': 'Mobile Development',
       'icon': '📱',
       'color': 0xFF00D4FF,
-      'proficiency': 0.92,
+      'proficiency': 0.90,
       'items': ['Flutter', 'Dart', 'State Management', 'Firebase', 'REST APIs', 'GetX / Riverpod'],
     },
     {
       'category': 'Web Development',
       'icon': '🌐',
       'color': 0xFF7B2FFF,
-      'proficiency': 0.85,
+      'proficiency': 0.75,
       'items': ['HTML5', 'CSS3', 'JavaScript', 'Bootstrap', 'Responsive Design', 'WebFlow'],
     },
     {
       'category': 'Backend & Database',
       'icon': '🗄️',
       'color': 0xFF00FF88,
-      'proficiency': 0.78,
+      'proficiency': 0.70,
       'items': ['MySQL', 'Firebase Firestore', 'REST API Integration', 'Node.js Basics'],
     },
     {
       'category': 'SEO & Marketing',
       'icon': '📈',
       'color': 0xFFFF6B35,
-      'proficiency': 0.88,
+      'proficiency': 0.80,
       'items': ['On-Page SEO', 'Technical SEO', 'Digital Marketing', 'Analytics', 'Content Strategy'],
     },
   ];
@@ -56,7 +61,6 @@ class PortfolioData {
       'icon': '🛒',
       'githubUrl': 'https://github.com/shaiwi_code/shaiwishop',
       'liveUrl': '',
-      // Place your screenshot at: assets/images/project1.png
       'imagePath': 'assets/images/project1.png',
       'screenshots': [
         'assets/images/project1.png',
@@ -324,3 +328,4 @@ class _GradientButtonState extends State<GradientButton>
     },
   ];
 }
+

@@ -23,42 +23,31 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
       return Stack(
-        children: [
-          // Particle bg
-          const Positioned.fill(child: _ParticleBg()),
-          // Cyan glow top-left
-          Positioned(top: -80, left: -80,
-              child: _GlowBlob(AppColors.primary.withOpacity(0.07), 480)),
-          // Purple glow bottom-right
-          Positioned(bottom: -120, right: -80,
-              child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
+          children: [
+      // Particle bg
+      const Positioned.fill(child: _ParticleBg()),
+      // Cyan glow top-left
+      Positioned(top: -80, left: -80,
+      child: _GlowBlob(AppColors.primary.withOpacity(0.07), 480)),
+      // Purple glow bottom-right
+      Positioned(bottom: -120, right: -80,
+      child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-          CustomScrollView(
-            controller: scrollController,
-            physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics()),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: r.hPad, vertical: r.vPad),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    r.sideBySide
-                        ? _DesktopHero(r: r,
-                        onContact: onContactTap,
-                        onProjects: onProjectsTap)
-                        : _MobileHero(r: r,
-                        onContact: onContactTap,
-                        onProjects: onProjectsTap),
-                    SizedBox(height: r.sp(60)),
-                    _HomeFooter(r: r),
-                    SizedBox(height: r.sp(32)),
-                  ]),
-                ),
-              ),
-            ],
-          ),
-        ],
+      SingleChildScrollView(
+      controller: scrollController,
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.symmetric(
+      horizontal: r.hPad, vertical: r.vPad),
+      child: r.sideBySide
+      ? _DesktopHero(r: r,
+      onContact: onContactTap,
+      onProjects: onProjectsTap)
+          : _MobileHero(r: r,
+      onContact: onContactTap,
+      onProjects: onProjectsTap),
+      ),
+
+      ],
       );
     });
   }
@@ -86,7 +75,7 @@ class _DesktopHero extends StatelessWidget {
   }
 }
 
-// ─── Mobile: text LEFT, profile card RIGHT ────────────────────────────────────
+// ─── Mobile: card top, text below — same look as desktop just stacked ─────────
 class _MobileHero extends StatelessWidget {
   final Rsp r;
   final VoidCallback onContact;
@@ -96,15 +85,13 @@ class _MobileHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          flex: 55,
-          child: _HeroText(r: r, onContact: onContact, onProjects: onProjects),
-        ),
-        SizedBox(width: r.sp(14)),
-        _ProfileCard(r: r),
+        Center(child: _ProfileCard(r: r)),
+        SizedBox(height: r.sp(36)),
+        _HeroText(r: r, onContact: onContact,
+            onProjects: onProjects, centered: true),
       ],
     );
   }
@@ -688,32 +675,4 @@ class _PtPainter extends CustomPainter {
   }
 
   @override bool shouldRepaint(_PtPainter _) => true;
-}
-// ── Home Footer ────────────────────────────────────────────────────────────────
-class _HomeFooter extends StatelessWidget {
-  final Rsp r;
-  const _HomeFooter({required this.r});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: r.sp(24)),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GradientText('shaiwi_code',
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: r.fs(14), fontWeight: FontWeight.w900),
-            colors: const [AppColors.primary, AppColors.secondary],
-          ),
-          Text('Flutter & Web Developer',
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: r.fs(11), color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
 }

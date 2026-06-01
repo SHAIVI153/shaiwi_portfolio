@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "167357954138",
+    "project_id": "shaiwi-portfolio",
+    "storage_bucket": "shaiwi-portfolio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167357954138:android:add74de155098425a68063",
+        "android_client_info": {
+          "package_name": "com.example.shaiwi_portfolio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVEVmdZwHaOjmoMytgNFuAzZJ-LPw1MXA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
