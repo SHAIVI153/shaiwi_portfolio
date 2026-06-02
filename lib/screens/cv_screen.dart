@@ -73,9 +73,9 @@ class _CVScreenState extends State<CVScreen> {
         ),
 
         SingleChildScrollView(
+          // NeverScrollableScrollPhysics — parent CustomScrollView scrolls
+          physics: const NeverScrollableScrollPhysics(),
           controller: widget.scrollController,
-          physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()),
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? 18 : 80,
             vertical: 60,
@@ -784,4 +784,5 @@ class _DownloadButtonState extends State<_DownloadButton>
     );
   }
 }
+
 

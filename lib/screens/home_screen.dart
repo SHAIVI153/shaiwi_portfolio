@@ -23,31 +23,32 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
       return Stack(
-          children: [
-      // Particle bg
-      const Positioned.fill(child: _ParticleBg()),
-      // Cyan glow top-left
-      Positioned(top: -80, left: -80,
-      child: _GlowBlob(AppColors.primary.withOpacity(0.07), 480)),
-      // Purple glow bottom-right
-      Positioned(bottom: -120, right: -80,
-      child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
+        children: [
+          // Particle bg
+          const Positioned.fill(child: _ParticleBg()),
+          // Cyan glow top-left
+          Positioned(top: -80, left: -80,
+              child: _GlowBlob(AppColors.primary.withOpacity(0.07), 480)),
+          // Purple glow bottom-right
+          Positioned(bottom: -120, right: -80,
+              child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-      SingleChildScrollView(
-      controller: scrollController,
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-      padding: EdgeInsets.symmetric(
-      horizontal: r.hPad, vertical: r.vPad),
-      child: r.sideBySide
-      ? _DesktopHero(r: r,
-      onContact: onContactTap,
-      onProjects: onProjectsTap)
-          : _MobileHero(r: r,
-      onContact: onContactTap,
-      onProjects: onProjectsTap),
-      ),
+          SingleChildScrollView(
+            controller: scrollController,
+            // Parent CustomScrollView handles scroll — inner never scrolls
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+                horizontal: r.hPad, vertical: r.vPad),
+            child: r.sideBySide
+                ? _DesktopHero(r: r,
+                onContact: onContactTap,
+                onProjects: onProjectsTap)
+                : _MobileHero(r: r,
+                onContact: onContactTap,
+                onProjects: onProjectsTap),
+          ),
 
-      ],
+        ],
       );
     });
   }

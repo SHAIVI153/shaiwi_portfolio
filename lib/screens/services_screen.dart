@@ -23,7 +23,7 @@ class ServicesScreen extends StatelessWidget {
     return ResponsiveBuilder(builder: (ctx, r) {
       return SingleChildScrollView(
         controller: scrollController,
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.symmetric(
             horizontal: r.hPad, vertical: r.vPad),
         child: Column(

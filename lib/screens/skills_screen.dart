@@ -48,43 +48,43 @@ class _SkillsScreenState extends State<SkillsScreen> {
       onKeyEvent: _onKey,
       child: ResponsiveBuilder(builder: (ctx, r) {
         return Stack(children: [
-            Positioned(top: 60, right: -160,
-            child: Container(width: 420, height: 420,
-                decoration: BoxDecoration(shape: BoxShape.circle,
-                    gradient: RadialGradient(colors: [
-                      AppColors.secondary.withOpacity(0.06),
-                      Colors.transparent])))),
+          Positioned(top: 60, right: -160,
+              child: Container(width: 420, height: 420,
+                  decoration: BoxDecoration(shape: BoxShape.circle,
+                      gradient: RadialGradient(colors: [
+                        AppColors.secondary.withOpacity(0.06),
+                        Colors.transparent])))),
 
-        SingleChildScrollView(
-        controller: widget.scrollController,
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: EdgeInsets.symmetric(
-        horizontal: r.hPad, vertical: r.vPad),
-        child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-        // ── Header row: title + anime char
-        _buildHeader(r),
-        SizedBox(height: r.sp(36)),
+          SingleChildScrollView(
+            controller: widget.scrollController,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+                horizontal: r.hPad, vertical: r.vPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header row: title + anime char
+                _buildHeader(r),
+                SizedBox(height: r.sp(36)),
 
-        // ── Keyboard hint
-        _KeyHint(r: r),
-        SizedBox(height: r.sp(20)),
+                // ── Keyboard hint
+                _KeyHint(r: r),
+                SizedBox(height: r.sp(20)),
 
-        // ── Category tabs
-        _buildTabs(r),
-        SizedBox(height: r.sp(24)),
+                // ── Category tabs
+                _buildTabs(r),
+                SizedBox(height: r.sp(24)),
 
-        // ── Detail card (animated switch)
-        _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
-        SizedBox(height: r.sp(36)),
+                // ── Detail card (animated switch)
+                _DetailCard(skill: PortfolioData.skills[_sel], idx: _sel, r: r),
+                SizedBox(height: r.sp(36)),
 
-        // ── Grid of all skills
-        _buildGrid(r),
-        SizedBox(height: r.sp(20)),
-        ],
-        ),
-        ),
+                // ── Grid of all skills
+                _buildGrid(r),
+                SizedBox(height: r.sp(20)),
+              ],
+            ),
+          ),
 
         ]);
       }),

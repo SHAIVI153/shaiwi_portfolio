@@ -36,16 +36,18 @@ import 'screens/contact_screen.dart';
 
 // ─── Entry ────────────────────────────────────────────────────────────────────
 Future<void> main() async {
-   {
-    // 3. Ensure karein ke binding initialize ho chuki hai
-    WidgetsFlutterBinding.ensureInitialized();
-
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
-
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Pixel rendering — high quality everywhere
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    // ignore: deprecated_member_use
+    PaintingBinding.instance.imageCache.maximumSize      = 1000;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 200 << 20; // 200 MB
+  });
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.landscapeLeft,
@@ -74,7 +76,8 @@ class App extends StatelessWidget {
   }
 }
 
-/// Enables mouse + touch + trackpad scrolling on all platforms
+/// Enables mouse + touch + trackpad scrolling on all platforms.
+/// ClampingScrollPhysics = webflow-style scroll (no bounce, no glow).
 class _AllDeviceScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
@@ -83,9 +86,16 @@ class _AllDeviceScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.trackpad,
     PointerDeviceKind.stylus,
   };
+
+  // Remove Android overscroll glow — web-clean feel
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) =>
+      child;
+
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
@@ -205,9 +215,8 @@ class _ShellState extends State<Shell> {
               ),
             ),
 
-            // ── Mobile bottom nav
-            if (r.isMobile)
-              _BottomNav(idx: _activeIdx, go: _scrollTo),
+            // ── Bottom nav REMOVED — Drawer handles mobile navigation
+
           ]),
         ),
       );
@@ -239,7 +248,8 @@ class _ScrollCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       controller: scrollCtrl,
-      physics: const BouncingScrollPhysics(
+      // ClampingScrollPhysics = webflow-style scroll (no bounce, linear feel)
+      physics: const ClampingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics()),
       slivers: [
 
@@ -504,7 +514,9 @@ class _GlobalFooter extends StatelessWidget {
         GestureDetector(
           onTap: () async {
             final uri = Uri.parse('https://wa.me/923156434296');
-            if (await canLaunchUrl(uri)) await launchUrl(uri);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
           },
           child: MouseRegion(
             cursor: SystemMouseCursors.click,

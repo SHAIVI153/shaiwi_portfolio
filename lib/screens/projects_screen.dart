@@ -42,7 +42,7 @@ class ProjectsScreen extends StatelessWidget {
         ),
         SingleChildScrollView(
           controller: scrollController,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? 24 : 80,
             vertical: 60,

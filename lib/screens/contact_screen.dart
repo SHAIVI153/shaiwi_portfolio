@@ -30,7 +30,9 @@ class _ContactScreenState extends State<ContactScreen> {
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   // 3. Submit function modified for Firebase connection
