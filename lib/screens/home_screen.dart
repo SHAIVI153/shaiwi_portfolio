@@ -6,6 +6,7 @@ import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
+import '../widgets/anime_character.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -33,21 +34,21 @@ class HomeScreen extends StatelessWidget {
           Positioned(bottom: -120, right: -80,
               child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-          SingleChildScrollView(
-            controller: scrollController,
-            // Parent CustomScrollView handles scroll — inner never scrolls
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(
-                horizontal: r.hPad, vertical: r.vPad),
-            child: r.sideBySide
-                ? _DesktopHero(r: r,
-                onContact: onContactTap,
-                onProjects: onProjectsTap)
-                : _MobileHero(r: r,
-                onContact: onContactTap,
-                onProjects: onProjectsTap),
+          SafeArea(
+            child: SingleChildScrollView(
+              controller: scrollController,
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.hPad, vertical: r.vPad),
+              child: r.sideBySide
+                  ? _DesktopHero(r: r,
+                  onContact: onContactTap,
+                  onProjects: onProjectsTap)
+                  : _MobileHero(r: r,
+                  onContact: onContactTap,
+                  onProjects: onProjectsTap),
+            ),
           ),
-
         ],
       );
     });
@@ -86,13 +87,15 @@ class _MobileHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(child: _ProfileCard(r: r)),
-        SizedBox(height: r.sp(36)),
-        _HeroText(r: r, onContact: onContact,
-            onProjects: onProjects, centered: true),
+        Expanded(
+          flex: 55,
+          child: _HeroText(r: r, onContact: onContact, onProjects: onProjects),
+        ),
+        SizedBox(width: r.sp(14)),
+        _ProfileCard(r: r),
       ],
     );
   }

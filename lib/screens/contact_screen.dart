@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shaiwi_portfolio/screens/responsive_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // 1. Firebase Firestore Import
 import '../widgets/anime_character.dart';
 import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
@@ -20,7 +19,6 @@ class _ContactScreenState extends State<ContactScreen> {
   final _email = TextEditingController();
   final _msg   = TextEditingController();
   bool _sent   = false;
-  bool _isLoading = false; // 2. Firebase submit handling ke liye loading flag
 
   @override
   void dispose() {
@@ -30,50 +28,12 @@ class _ContactScreenState extends State<ContactScreen> {
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  // 3. Submit function modified for Firebase connection
-  Future<void> _submit() async {
-    final nameText = _name.text.trim();
-    final emailText = _email.text.trim();
-    final msgText = _msg.text.trim();
-
-    if (nameText.isEmpty || emailText.isEmpty || msgText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields!"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Firebase collection 'messages' mein record generate hoga
-      await FirebaseFirestore.instance.collection('messages').add({
-        'name': nameText,
-        'email': emailText,
-        'message': msgText,
-        'sentAt': FieldValue.serverTimestamp(),
-      });
-
-      setState(() {
-        _sent = true;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Failed to send message: ${e.toString()}"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+  void _submit() {
+    if (_name.text.isNotEmpty && _email.text.isNotEmpty) {
+      setState(() => _sent = true);
     }
   }
 
@@ -125,7 +85,7 @@ class _ContactScreenState extends State<ContactScreen> {
                             ? _Thanks(r: r)
                             : _Form(r: r,
                             name: _name, email: _email,
-                            msg: _msg, onSubmit: _submit, isLoading: _isLoading)),
+                            msg: _msg, onSubmit: _submit)),
                   ])
                   : Column(children: [
                 _SocialLinks(r: r, launch: _launch),
@@ -134,7 +94,7 @@ class _ContactScreenState extends State<ContactScreen> {
                     ? _Thanks(r: r)
                     : _Form(r: r,
                     name: _name, email: _email,
-                    msg: _msg, onSubmit: _submit, isLoading: _isLoading),
+                    msg: _msg, onSubmit: _submit),
               ]),
             ],
           ),
@@ -153,17 +113,17 @@ class _SocialLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     final links = [
       {'icon': Icons.email_outlined, 'label': 'Email',
-        'val': PortfolioData.email, 'c': AppColors.primary,
+        'val': 'shawaizengg454@gmail.com', 'c': AppColors.primary,
         'url': 'mailto:${PortfolioData.email}'},
       {'icon': Icons.code, 'label': 'GitHub',
         'val': 'SHAIVI153', 'c': AppColors.textPrimary,
-        'url': PortfolioData.github},
+        'url': 'https://github.com/SHAIVI153'},
       {'icon': Icons.camera_alt_outlined, 'label': 'Instagram',
         'val': 'shawaiz._.niamat', 'c': const Color(0xFFE1306C),
-        'url': PortfolioData.instagram},
+        'url': 'https://instagram.com/shawaiz._.niamat'},
       {'icon': Icons.business_center_outlined, 'label': 'LinkedIn',
         'val': 'Shawaiz Niamat', 'c': const Color(0xFF0077B5),
-        'url': PortfolioData.linkedin},
+        'url': 'https://linkedin.com/in/shawaiz-niamat'},
     ];
 
     return Column(children: links.asMap().entries.map((e) {
@@ -227,9 +187,8 @@ class _Form extends StatelessWidget {
   final Rsp r;
   final TextEditingController name, email, msg;
   final VoidCallback onSubmit;
-  final bool isLoading; // Pass-through property
   const _Form({required this.r, required this.name,
-    required this.email, required this.msg, required this.onSubmit, required this.isLoading});
+    required this.email, required this.msg, required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
@@ -249,19 +208,17 @@ class _Form extends StatelessWidget {
           ),
         ),
         SizedBox(height: r.sp(22)),
-        _field('Your Name', name, Icons.person_outline, r, enabled: !isLoading),
+        _field('Your Name', name, Icons.person_outline, r),
         SizedBox(height: r.sp(14)),
         _field('Email Address', email, Icons.email_outlined, r,
-            type: TextInputType.emailAddress, enabled: !isLoading),
+            type: TextInputType.emailAddress),
         SizedBox(height: r.sp(14)),
         _field('Your Message', msg, Icons.message_outlined, r,
-            maxLines: 4, enabled: !isLoading),
+            maxLines: 4),
         SizedBox(height: r.sp(20)),
         SizedBox(
           width: double.infinity,
-          child: isLoading
-              ? Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : GlowButton(
+          child: GlowButton(
             label: 'SEND MESSAGE',
             onTap: onSubmit,
             color: AppColors.primary,
@@ -277,12 +234,11 @@ class _Form extends StatelessWidget {
 
   Widget _field(String hint, TextEditingController ctrl,
       IconData icon, Rsp r, {
-        int maxLines = 1, TextInputType? type, bool enabled = true}) {
+        int maxLines = 1, TextInputType? type}) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
       keyboardType: type,
-      enabled: enabled,
       style: GoogleFonts.spaceGrotesk(
           fontSize: r.fs(13.5), color: AppColors.textPrimary),
       decoration: InputDecoration(

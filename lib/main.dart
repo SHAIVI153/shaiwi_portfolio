@@ -14,7 +14,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import 'dart:math' as math;
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -23,7 +22,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'firebase_options.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/common_widgets.dart';
 import 'screens/responsive_screen.dart';
@@ -35,19 +33,8 @@ import 'screens/cv_screen.dart';
 import 'screens/contact_screen.dart';
 
 // ─── Entry ────────────────────────────────────────────────────────────────────
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Pixel rendering — high quality everywhere
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    // ignore: deprecated_member_use
-    PaintingBinding.instance.imageCache.maximumSize      = 1000;
-    PaintingBinding.instance.imageCache.maximumSizeBytes = 200 << 20; // 200 MB
-  });
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.landscapeLeft,
@@ -76,8 +63,7 @@ class App extends StatelessWidget {
   }
 }
 
-/// Enables mouse + touch + trackpad scrolling on all platforms.
-/// ClampingScrollPhysics = webflow-style scroll (no bounce, no glow).
+/// Enables mouse + touch + trackpad scrolling on all platforms
 class _AllDeviceScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
@@ -86,16 +72,9 @@ class _AllDeviceScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.trackpad,
     PointerDeviceKind.stylus,
   };
-
-  // Remove Android overscroll glow — web-clean feel
-  @override
-  Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) =>
-      child;
-
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
@@ -215,8 +194,7 @@ class _ShellState extends State<Shell> {
               ),
             ),
 
-            // ── Bottom nav REMOVED — Drawer handles mobile navigation
-
+            // ── No bottom nav — use drawer on mobile (hamburger top-left)
           ]),
         ),
       );
@@ -248,8 +226,7 @@ class _ScrollCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       controller: scrollCtrl,
-      // ClampingScrollPhysics = webflow-style scroll (no bounce, linear feel)
-      physics: const ClampingScrollPhysics(
+      physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics()),
       slivers: [
 
@@ -514,9 +491,7 @@ class _GlobalFooter extends StatelessWidget {
         GestureDetector(
           onTap: () async {
             final uri = Uri.parse('https://wa.me/923156434296');
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
+            if (await canLaunchUrl(uri)) await launchUrl(uri);
           },
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
