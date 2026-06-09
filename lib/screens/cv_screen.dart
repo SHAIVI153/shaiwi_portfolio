@@ -6,6 +6,7 @@ import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
 import '../widgets/tilt_card.dart';
+import 'responsive_screen.dart';
 
 class CVScreen extends StatefulWidget {
   final ScrollController? scrollController;
@@ -32,87 +33,86 @@ class _CVScreenState extends State<CVScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 768;
+    return ResponsiveBuilder(builder: (ctx, r) {
+      final isMobile = r.isMobile;
 
-    return Stack(
-      children: [
-        // Background glows
-        Positioned(
-          top: 0,
-          right: -150,
-          child: Container(
-            width: 450,
-            height: 450,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.secondary.withOpacity(0.07),
-                Colors.transparent,
-              ]),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: -100,
-          left: -100,
-          child: Container(
-            width: 400,
-            height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.primary.withOpacity(0.06),
-                Colors.transparent,
-              ]),
-            ),
-          ),
-        ),
-
-        SingleChildScrollView(
-          controller: widget.scrollController,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 18 : 80,
-            vertical: 60,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Section title
-              const SectionTitle(
-                tag: 'RESUME',
-                title: 'My CV &\nResume',
-                subtitle:
-                'Download my full resume to see my experience, education, and everything I bring to the table.',
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.3, curve: Curves.easeOutCubic),
-
-              const SizedBox(height: 56),
-
-              isMobile
-                  ? Column(
-                children: [
-                  _buildCVCard(isMobile),
-                  const SizedBox(height: 32),
-                  _buildInfoCards(isMobile),
-                ],
-              )
-                  : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 5, child: _buildCVCard(isMobile)),
-                  const SizedBox(width: 32),
-                  Expanded(flex: 5, child: _buildInfoCards(isMobile)),
-                ],
+      return Stack(
+        children: [
+          // Background glows
+          Positioned(
+            top: 0,
+            right: -150,
+            child: Container(
+              width: 450,
+              height: 450,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  AppColors.secondary.withOpacity(0.07),
+                  Colors.transparent,
+                ]),
               ),
-            ],
+            ),
           ),
-        ),
-      ],
-    );
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  AppColors.primary.withOpacity(0.06),
+                  Colors.transparent,
+                ]),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 18 : 80,
+              vertical: 60,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Section title
+                const SectionTitle(
+                  tag: 'RESUME',
+                  title: 'My CV &\nResume',
+                  subtitle:
+                  'Download my full resume to see my experience, education, and everything I bring to the table.',
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: 0.3, curve: Curves.easeOutCubic),
+
+                const SizedBox(height: 56),
+
+                isMobile
+                    ? Column(
+                  children: [
+                    _buildCVCard(isMobile),
+                    const SizedBox(height: 32),
+                    _buildInfoCards(isMobile),
+                  ],
+                )
+                    : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 5, child: _buildCVCard(isMobile)),
+                    const SizedBox(width: 32),
+                    Expanded(flex: 5, child: _buildInfoCards(isMobile)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }); // end ResponsiveBuilder
   }
 
   Widget _buildCVCard(bool isMobile) {
@@ -141,7 +141,8 @@ class _CVScreenState extends State<CVScreen> {
             // ── CV Preview mock
             Container(
               margin: const EdgeInsets.all(24),
-              constraints: const BoxConstraints(maxHeight: 360),
+              height: isMobile ? 280 : 340,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: const Color(0xFF0A1628),
                 borderRadius: BorderRadius.circular(14),
@@ -149,95 +150,98 @@ class _CVScreenState extends State<CVScreen> {
               ),
               child: Stack(
                 children: [
-                  // CV mock content
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [AppColors.primary, AppColors.secondary],
+                  // CV mock content — scrollable inside fixed box
+                  Positioned.fill(
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [AppColors.primary, AppColors.secondary],
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Text('SN',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                      )),
                                 ),
                               ),
-                              child: const Center(
-                                child: Text('SN',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                    )),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(PortfolioData.name,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      )),
+                                  Text(PortfolioData.title,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 11,
+                                        color: AppColors.primary,
+                                      )),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(PortfolioData.name,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                    )),
-                                Text(PortfolioData.title,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 11,
-                                      color: AppColors.primary,
-                                    )),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _cvDivider(),
-                        const SizedBox(height: 12),
-                        _cvSection('EXPERIENCE'),
-                        const SizedBox(height: 6),
-                        _cvLine(0.85),
-                        _cvLine(0.65),
-                        _cvLine(0.75),
-                        const SizedBox(height: 12),
-                        _cvSection('SKILLS'),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            _cvChip('Flutter', AppColors.primary),
-                            const SizedBox(width: 6),
-                            _cvChip('Dart', AppColors.primary),
-                            const SizedBox(width: 6),
-                            _cvChip('SEO', AppColors.accent),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            _cvChip('MySQL', AppColors.secondary),
-                            const SizedBox(width: 6),
-                            _cvChip('Bootstrap', AppColors.secondary),
-                            const SizedBox(width: 6),
-                            _cvChip('JS', AppColors.secondary),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _cvSection('EDUCATION'),
-                        const SizedBox(height: 6),
-                        _cvLine(0.7),
-                        _cvLine(0.5),
-                        const SizedBox(height: 12),
-                        _cvSection('CONTACT'),
-                        const SizedBox(height: 6),
-                        _cvLine(0.6),
-                        _cvLine(0.5),
-                      ],
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _cvDivider(),
+                          const SizedBox(height: 12),
+                          _cvSection('EXPERIENCE'),
+                          const SizedBox(height: 6),
+                          _cvLine(0.85),
+                          _cvLine(0.65),
+                          _cvLine(0.75),
+                          const SizedBox(height: 12),
+                          _cvSection('SKILLS'),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              _cvChip('Flutter', AppColors.primary),
+                              const SizedBox(width: 6),
+                              _cvChip('Dart', AppColors.primary),
+                              const SizedBox(width: 6),
+                              _cvChip('SEO', AppColors.accent),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _cvChip('MySQL', AppColors.secondary),
+                              const SizedBox(width: 6),
+                              _cvChip('Bootstrap', AppColors.secondary),
+                              const SizedBox(width: 6),
+                              _cvChip('JS', AppColors.secondary),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _cvSection('EDUCATION'),
+                          const SizedBox(height: 6),
+                          _cvLine(0.7),
+                          _cvLine(0.5),
+                          const SizedBox(height: 12),
+                          _cvSection('CONTACT'),
+                          const SizedBox(height: 6),
+                          _cvLine(0.6),
+                          _cvLine(0.5),
+                        ],
+                      ),
                     ),
-                  ),
+                  ),  // Positioned.fill
                   // Blur overlay at bottom
                   Positioned(
                     bottom: 0,

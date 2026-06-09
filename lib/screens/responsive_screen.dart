@@ -46,7 +46,8 @@ class Rsp {
   double get profileCardWidth {
     if (isDesktop) return 310;
     if (isTablet)  return 270;
-    return (width - hPad * 2).clamp(240, 340);
+    // Mobile: take most of screen width but cap it
+    return (width * 0.75).clamp(200.0, 300.0);
   }
 
   // ── Grid columns
@@ -61,7 +62,7 @@ class Rsp {
   double get sectionTitleFs => fs(42);
 
   // ── Whether to show side-by-side or stacked
-  bool get sideBySide => !isMobile;
+  bool get sideBySide => isDesktop || isTablet;
 }
 
 /// Widget builder that provides Rsp

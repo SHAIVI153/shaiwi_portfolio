@@ -21,9 +21,7 @@ class ServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
-      return SingleChildScrollView(
-        controller: scrollController,
-        physics: const NeverScrollableScrollPhysics(),
+      return Padding(
         padding: EdgeInsets.symmetric(
             horizontal: r.hPad, vertical: r.vPad),
         child: Column(

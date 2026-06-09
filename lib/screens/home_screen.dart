@@ -34,20 +34,16 @@ class HomeScreen extends StatelessWidget {
           Positioned(bottom: -120, right: -80,
               child: _GlowBlob(AppColors.secondary.withOpacity(0.07), 520)),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              controller: scrollController,
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.hPad, vertical: r.vPad),
-              child: r.sideBySide
-                  ? _DesktopHero(r: r,
-                  onContact: onContactTap,
-                  onProjects: onProjectsTap)
-                  : _MobileHero(r: r,
-                  onContact: onContactTap,
-                  onProjects: onProjectsTap),
-            ),
+          Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: r.hPad, vertical: r.vPad),
+            child: r.sideBySide
+                ? _DesktopHero(r: r,
+                onContact: onContactTap,
+                onProjects: onProjectsTap)
+                : _MobileHero(r: r,
+                onContact: onContactTap,
+                onProjects: onProjectsTap),
           ),
         ],
       );
@@ -77,7 +73,7 @@ class _DesktopHero extends StatelessWidget {
   }
 }
 
-// ─── Mobile: card top, text below — same look as desktop just stacked ─────────
+// ─── Mobile: card top, text below — stacked vertically ─────────────────────────
 class _MobileHero extends StatelessWidget {
   final Rsp r;
   final VoidCallback onContact;
@@ -87,15 +83,12 @@ class _MobileHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          flex: 55,
-          child: _HeroText(r: r, onContact: onContact, onProjects: onProjects),
-        ),
-        SizedBox(width: r.sp(14)),
-        _ProfileCard(r: r),
+        Center(child: _ProfileCard(r: r)),
+        SizedBox(height: r.sp(28)),
+        _HeroText(r: r, onContact: onContact, onProjects: onProjects, centered: true),
       ],
     );
   }

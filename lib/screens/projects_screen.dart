@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'responsive_screen.dart';
 import '../widgets/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/portfolio_data.dart';
@@ -20,8 +21,8 @@ class ProjectsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 768;
+    return LayoutBuilder(builder: (ctx, constraints) {
+      final isMobile = constraints.maxWidth < 600;
 
     return Stack(
       children: [
@@ -40,9 +41,7 @@ class ProjectsScreen extends StatelessWidget {
             ),
           ),
         ),
-        SingleChildScrollView(
-          controller: scrollController,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        Padding(
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? 16 : 80,
             vertical: 60,
@@ -85,6 +84,7 @@ class ProjectsScreen extends StatelessWidget {
         ),
       ],
     );
+    }); // end LayoutBuilder
   }
 }
 

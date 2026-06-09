@@ -55,9 +55,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                         AppColors.secondary.withOpacity(0.06),
                         Colors.transparent])))),
 
-          SingleChildScrollView(
-            controller: widget.scrollController,
-            physics: const NeverScrollableScrollPhysics(),
+          Padding(
             padding: EdgeInsets.symmetric(
                 horizontal: r.hPad, vertical: r.vPad),
             child: Column(
@@ -221,7 +219,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                                 color: c.withOpacity(0.6), blurRadius: 6)])),
                   ]),
                   SizedBox(height: r.sp(12)),
-                  _Bar(v: sk['proficiency'] as double, c: c, h: 4.5),
+                  _Bar(v: (sk['proficiency'] as num?)?.toDouble() ?? 0.8, c: c, h: 4.5),
                   SizedBox(height: r.sp(12)),
                   Wrap(spacing: 5, runSpacing: 5,
                     children: (sk['items'] as List<String>)
@@ -275,7 +273,7 @@ class _DetailCard extends StatelessWidget {
   Widget _buildCard() {
     final c = Color(skill['color'] as int);
     final items = skill['items'] as List<String>;
-    final prof = skill['proficiency'] as double;
+    final prof = (skill['proficiency'] as num?)?.toDouble() ?? 0.8;
 
     return Container(
       width: double.infinity,

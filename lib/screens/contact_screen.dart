@@ -40,10 +40,7 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
-      return SafeArea(
-        child: SingleChildScrollView(
-          controller: widget.scrollController,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      return Padding(
           padding: EdgeInsets.symmetric(
               horizontal: r.hPad, vertical: r.vPad),
           child: Column(
@@ -98,7 +95,6 @@ class _ContactScreenState extends State<ContactScreen> {
               ]),
             ],
           ),
-        ),
       );
     });
   }
