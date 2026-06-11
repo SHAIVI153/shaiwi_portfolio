@@ -52,21 +52,21 @@ class PortfolioData {
   // ── Projects now include image paths + github/live links + codeSnippet
   static const List<Map<String, dynamic>> projects = [
     {
-      'title': 'ShaiwiShop',
+      'title': 'denim-diverse',
       'description': 'Full-featured e-commerce Flutter app with real-time Firebase backend, GetX state management, and beautiful UI.',
       'tags': ['Flutter', 'Firebase', 'GetX'],
       'color': 0xFF00D4FF,
       'icon': '🛒',
-      'githubUrl': 'https://github.com/shaiwi_code/shaiwishop',
+      'githubUrl': 'https://github.com/SHAIVI153/denim_diverse',
       'liveUrl': '',
       // Place your screenshot at: assets/images/project1.png
-      'imagePath': 'assets/images/project1.png',
+      'imagePath': 'assets/images/Header.jpeg',
       'screenshots': [
-        'assets/images/project1.png',
-        'assets/images/project1b.png',
-        'assets/images/project1c.png',
+        'assets/images/products.jpeg',
+        'assets/images/size.jpeg',
+        'assets/images/order.jpeg',
       ],
-      'codeSnippet': '''// ShaiwiShop — Product Card Widget
+      'codeSnippet': '''// denim-diverse — Product Card Widget
 class ProductCard extends StatelessWidget {
   final Product product;
   const ProductCard({super.key, required this.product});
@@ -127,54 +127,42 @@ class ProductCard extends StatelessWidget {
 }''',
     },
     {
-      'title': 'TaskFlow Pro',
-      'description': 'Productivity app with Kanban boards, local notifications, and Hive database for offline-first experience.',
-      'tags': ['Flutter', 'Dart', 'Hive'],
+      'title': 'shaiwi_portfolio',
+      'description': 'A high-performance, ultra-modern developer portfolio application built using Flutter. Features a fully responsive interface layout, beautiful particle/glow visual effects, fluid smooth animations using flutter_animate, syntax-highlighted code viewer tabs, and direct asset-based resume extraction workflows.',
+      'tags': ['Flutter', 'Dart', 'Responsive UI', 'SEO Optimized', 'Animations'],
       'color': 0xFF7B2FFF,
       'icon': '✅',
-      'githubUrl': 'https://github.com/shaiwi_code/taskflow',
+      'githubUrl': 'https://github.com/SHAIVI153/shaiwi_portfolio',
       'liveUrl': '',
-      'imagePath': 'assets/images/project2.png',
+      'imagePath': 'assets/images/flutter.jpeg',
       'screenshots': [
-        'assets/images/project2.png',
-        'assets/images/project2b.png',
+        'assets/images/services.jpeg',
+        'assets/images/skills.jpeg',
+        'assets/images/drawers.jpeg',
+        'assets/images/cv.jpeg',
+        'assets/images/connect.jpeg',
       ],
-      'codeSnippet': '''// TaskFlow — Kanban Task Model (Hive)
-@HiveType(typeId: 0)
-class Task extends HiveObject {
-  @HiveField(0)
-  late String id;
+      'codeSnippet': '''import 'package:flutter/material.dart';
 
-  @HiveField(1)
-  late String title;
+class ResponsiveScreen extends StatelessWidget {
+  final Widget mobile;
+  final Widget desktop;
 
-  @HiveField(2)
-  late String status; // todo | doing | done
+  const ResponsiveScreen({super.key, required this.mobile, required this.desktop});
 
-  @HiveField(3)
-  late DateTime createdAt;
-
-  @HiveField(4)
-  bool isCompleted = false;
-
-  Task({
-    required this.id,
-    required this.title,
-    required this.status,
-    required this.createdAt,
-  });
-
-  void complete() {
-    isCompleted = true;
-    status = 'done';
-    save(); // Hive auto-persist
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 768) {
+          return mobile;
+        } else {
+          return desktop;
+        }
+      },
+    );
   }
-}
-
-// Riverpod provider
-final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>(
-  (ref) => TaskNotifier(),
-);''',
+}''',
     },
     {
       'title': 'SEO Dashboard',
