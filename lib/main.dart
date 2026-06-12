@@ -22,6 +22,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/common_widgets.dart';
 import 'screens/responsive_screen.dart';
@@ -33,8 +35,11 @@ import 'screens/cv_screen.dart';
 import 'screens/contact_screen.dart';
 
 // ─── Entry ────────────────────────────────────────────────────────────────────
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.landscapeLeft,

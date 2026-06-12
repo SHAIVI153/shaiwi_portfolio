@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shaiwi_portfolio/screens/responsive_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/anime_character.dart';
@@ -19,6 +20,8 @@ class _ContactScreenState extends State<ContactScreen> {
   final _email = TextEditingController();
   final _msg   = TextEditingController();
   bool _sent   = false;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -31,9 +34,21 @@ class _ContactScreenState extends State<ContactScreen> {
     if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _submit() {
-    if (_name.text.isNotEmpty && _email.text.isNotEmpty) {
-      setState(() => _sent = true);
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty || _email.text.trim().isEmpty) return;
+    setState(() { _loading = true; _error = null; });
+    try {
+      await FirebaseFirestore.instance.collection('messages').add({
+        'name':      _name.text.trim(),
+        'email':     _email.text.trim(),
+        'message':   _msg.text.trim(),
+        'timestamp': FieldValue.serverTimestamp(),
+        'seen':      false,
+      });
+      setState(() { _sent = true; _loading = false; });
+      _name.clear(); _email.clear(); _msg.clear();
+    } catch (e) {
+      setState(() { _error = 'Message send nahi hua. Dobara try karein.'; _loading = false; });
     }
   }
 
@@ -41,60 +56,62 @@ class _ContactScreenState extends State<ContactScreen> {
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
       return Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: r.hPad, vertical: r.vPad),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header + anime
-              r.sideBySide
-                  ? Row(crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: SectionHeader(
-                      tag: 'GET IN TOUCH', title: "Let's\nConnect",
-                      subtitle: 'Open to new projects and collaborations.',
-                      titleFs: r.sectionTitleFs,
-                    )),
-                    AnimeCharacter(section: 'contact', size: r.sp(190)),
-                  ])
-                  : Column(crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(child: AnimeCharacter(
-                        section: 'contact', size: r.sp(140))),
-                    SizedBox(height: r.sp(18)),
-                    SectionHeader(
-                      tag: 'GET IN TOUCH', title: "Let's\nConnect",
-                      subtitle: 'Open to new projects and collaborations.',
-                      titleFs: r.sectionTitleFs,
-                    ),
-                  ]),
+        padding: EdgeInsets.symmetric(
+            horizontal: r.hPad, vertical: r.vPad),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header + anime
+            r.sideBySide
+                ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: SectionHeader(
+                    tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                    subtitle: 'Open to new projects and collaborations.',
+                    titleFs: r.sectionTitleFs,
+                  )),
+                  AnimeCharacter(section: 'contact', size: r.sp(190)),
+                ])
+                : Column(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: AnimeCharacter(
+                      section: 'contact', size: r.sp(140))),
+                  SizedBox(height: r.sp(18)),
+                  SectionHeader(
+                    tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                    subtitle: 'Open to new projects and collaborations.',
+                    titleFs: r.sectionTitleFs,
+                  ),
+                ]),
 
-              SizedBox(height: r.sp(44)),
+            SizedBox(height: r.sp(44)),
 
-              r.sideBySide
-                  ? Row(crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 4,
-                        child: _SocialLinks(r: r, launch: _launch)),
-                    SizedBox(width: r.sp(32)),
-                    Expanded(flex: 6,
-                        child: _sent
-                            ? _Thanks(r: r)
-                            : _Form(r: r,
-                            name: _name, email: _email,
-                            msg: _msg, onSubmit: _submit)),
-                  ])
-                  : Column(children: [
-                _SocialLinks(r: r, launch: _launch),
-                SizedBox(height: r.sp(28)),
-                _sent
-                    ? _Thanks(r: r)
-                    : _Form(r: r,
-                    name: _name, email: _email,
-                    msg: _msg, onSubmit: _submit),
-              ]),
-            ],
-          ),
+            r.sideBySide
+                ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 4,
+                      child: _SocialLinks(r: r, launch: _launch)),
+                  SizedBox(width: r.sp(32)),
+                  Expanded(flex: 6,
+                      child: _sent
+                          ? _Thanks(r: r)
+                          : _Form(r: r,
+                          name: _name, email: _email,
+                          msg: _msg, onSubmit: _submit,
+                          loading: _loading, error: _error)),
+                ])
+                : Column(children: [
+              _SocialLinks(r: r, launch: _launch),
+              SizedBox(height: r.sp(28)),
+              _sent
+                  ? _Thanks(r: r)
+                  : _Form(r: r,
+                  name: _name, email: _email,
+                  msg: _msg, onSubmit: _submit,
+                  loading: _loading, error: _error),
+            ]),
+          ],
+        ),
       );
     });
   }
@@ -182,9 +199,12 @@ class _SocialLinks extends StatelessWidget {
 class _Form extends StatelessWidget {
   final Rsp r;
   final TextEditingController name, email, msg;
-  final VoidCallback onSubmit;
+  final Future<void> Function() onSubmit;
+  final bool loading;
+  final String? error;
   const _Form({required this.r, required this.name,
-    required this.email, required this.msg, required this.onSubmit});
+    required this.email, required this.msg, required this.onSubmit,
+    this.loading = false, this.error});
 
   @override
   Widget build(BuildContext context) {
@@ -212,9 +232,19 @@ class _Form extends StatelessWidget {
         _field('Your Message', msg, Icons.message_outlined, r,
             maxLines: 4),
         SizedBox(height: r.sp(20)),
+        if (error != null)
+          Padding(
+            padding: EdgeInsets.only(bottom: r.sp(10)),
+            child: Text(error!,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: r.fs(12), color: Colors.redAccent),
+            ),
+          ),
         SizedBox(
           width: double.infinity,
-          child: GlowButton(
+          child: loading
+              ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : GlowButton(
             label: 'SEND MESSAGE',
             onTap: onSubmit,
             color: AppColors.primary,

@@ -62,9 +62,14 @@ class PortfolioData {
       // Place your screenshot at: assets/images/project1.png
       'imagePath': 'assets/images/Header.jpeg',
       'screenshots': [
+        'assets/images/Header.jpeg',
         'assets/images/products.jpeg',
         'assets/images/size.jpeg',
         'assets/images/order.jpeg',
+        'assets/images/checkout.jpeg',
+        'assets/images/deals.jpeg',
+        'assets/images/featured.jpeg',
+        'assets/images/drawer.jpeg',
       ],
       'codeSnippet': '''// denim-diverse — Product Card Widget
 class ProductCard extends StatelessWidget {
@@ -160,132 +165,6 @@ class ResponsiveScreen extends StatelessWidget {
           return desktop;
         }
       },
-    );
-  }
-}''',
-    },
-    {
-      'title': 'SEO Dashboard',
-      'description': 'Web-based SEO analytics dashboard with keyword tracking, competitor analysis, and performance reporting.',
-      'tags': ['HTML', 'CSS', 'JS', 'MySQL'],
-      'color': 0xFF00FF88,
-      'icon': '📊',
-      'githubUrl': 'https://github.com/shaiwi_code/seo-dashboard',
-      'liveUrl': 'https://shaiwi-seo.netlify.app',
-      'imagePath': 'assets/images/project3.png',
-      'screenshots': [
-        'assets/images/project3.png',
-        'assets/images/project3b.png',
-      ],
-      'codeSnippet': '''// SEO Dashboard — Keyword Rank Tracker
-async function fetchKeywordRanks(keywords) {
-  const results = await Promise.all(
-    keywords.map(async (kw) => {
-      const res = await fetch(\`/api/rank?q=\${encodeURIComponent(kw)}\`);
-      const data = await res.json();
-      return {
-        keyword: kw,
-        rank: data.rank,
-        change: data.change,
-        volume: data.searchVolume,
-        url: data.topUrl,
-      };
-    })
-  );
-
-  renderTable(results);
-  updateChart(results);
-}
-
-function renderTable(data) {
-  const tbody = document.querySelector('#rank-table tbody');
-  tbody.innerHTML = data.map(row => \`
-    <tr class="rank-row \${row.change > 0 ? 'up' : 'down'}">
-      <td>\${row.keyword}</td>
-      <td>#\${row.rank}</td>
-      <td>\${row.change > 0 ? '▲' : '▼'} \${Math.abs(row.change)}</td>
-      <td>\${row.volume.toLocaleString()}</td>
-    </tr>
-  \`).join('');
-}''',
-    },
-    {
-      'title': 'Portfolio UI Kit',
-      'description': 'A reusable Flutter UI kit with 30+ custom widgets, dark/light theme, and smooth animations.',
-      'tags': ['Flutter', 'Dart', 'Animations'],
-      'color': 0xFFFF6B35,
-      'icon': '🎨',
-      'githubUrl': 'https://github.com/shaiwi_code/flutter-ui-kit',
-      'liveUrl': '',
-      'imagePath': 'assets/images/project4.png',
-      'screenshots': [
-        'assets/images/project4.png',
-        'assets/images/project4b.png',
-      ],
-      'codeSnippet': '''// Flutter UI Kit — Animated Gradient Button
-class GradientButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onTap;
-  final List<Color> colors;
-
-  const GradientButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-    this.colors = const [Color(0xFF00D4FF), Color(0xFF7B2FFF)],
-  });
-
-  @override
-  State<GradientButton> createState() => _GradientButtonState();
-}
-
-class _GradientButtonState extends State<GradientButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  bool _pressed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 28, vertical: 14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: widget.colors),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: widget.colors.first.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Text(widget.label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            )),
-        ),
-      ),
     );
   }
 }''',
