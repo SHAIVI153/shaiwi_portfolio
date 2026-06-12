@@ -20,6 +20,13 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1 # <-- Launcher icons package add ho gaya
+
+# --- App Icon Configuration ---
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/Icon-1024.png" # <-- Aapki image ka path
 
 flutter:
   uses-material-design: true

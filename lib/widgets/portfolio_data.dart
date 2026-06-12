@@ -14,7 +14,6 @@ class PortfolioData {
   static const String whatsapp  = 'https://wa.me/923156434296';
   static const String phone     = '+92 315 6434296';
 
-  // ── CV download URL (put your Google Drive / Dropbox direct link here)
   static const String cvDownloadUrl =
       'https://drive.google.com/uc?export=download&id=11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9';
 
@@ -49,7 +48,6 @@ class PortfolioData {
     },
   ];
 
-  // ── Projects now include image paths + github/live links + codeSnippet
   static const List<Map<String, dynamic>> projects = [
     {
       'title': 'denim-diverse',
@@ -59,81 +57,51 @@ class PortfolioData {
       'icon': '🛒',
       'githubUrl': 'https://github.com/SHAIVI153/denim_diverse',
       'liveUrl': '',
-      // Place your screenshot at: assets/images/project1.png
       'imagePath': 'assets/images/Header.jpeg',
       'screenshots': [
-        'assets/images/Header.jpeg',
         'assets/images/products.jpeg',
         'assets/images/size.jpeg',
         'assets/images/order.jpeg',
-        'assets/images/checkout.jpeg',
-        'assets/images/deals.jpeg',
-        'assets/images/featured.jpeg',
-        'assets/images/drawer.jpeg',
       ],
-      'codeSnippet': '''// denim-diverse — Product Card Widget
-class ProductCard extends StatelessWidget {
-  final Product product;
-  const ProductCard({super.key, required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.to(() => ProductDetail(product)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: CachedNetworkImage(
-                imageUrl: product.imageUrl,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(product.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    )),
-                  const SizedBox(height: 4),
-                  Text('\${product.price}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                    )),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}''',
+      'comingSoon': false,
+      'codeSnippet': '// denim-diverse — Product Card Widget\n'
+          'class ProductCard extends StatelessWidget {\n'
+          '  final Product product;\n'
+          '  const ProductCard({super.key, required this.product});\n'
+          '\n'
+          '  @override\n'
+          '  Widget build(BuildContext context) {\n'
+          '    return GestureDetector(\n'
+          '      onTap: () => Get.to(() => ProductDetail(product)),\n'
+          '      child: Container(\n'
+          '        decoration: BoxDecoration(\n'
+          '          color: AppColors.card,\n'
+          '          borderRadius: BorderRadius.circular(16),\n'
+          '        ),\n'
+          '        child: Column(\n'
+          '          crossAxisAlignment: CrossAxisAlignment.start,\n'
+          '          children: [\n'
+          '            ClipRRect(\n'
+          '              borderRadius: const BorderRadius.vertical(\n'
+          '                top: Radius.circular(16),\n'
+          '              ),\n'
+          '              child: CachedNetworkImage(\n'
+          '                imageUrl: product.imageUrl,\n'
+          '                height: 160,\n'
+          '                width: double.infinity,\n'
+          '                fit: BoxFit.cover,\n'
+          '              ),\n'
+          '            ),\n'
+          '          ],\n'
+          '        ),\n'
+          '      ),\n'
+          '    );\n'
+          '  }\n'
+          '}',
     },
     {
       'title': 'shaiwi_portfolio',
-      'description': 'A high-performance, ultra-modern developer portfolio application built using Flutter. Features a fully responsive interface layout, beautiful particle/glow visual effects, fluid smooth animations using flutter_animate, syntax-highlighted code viewer tabs, and direct asset-based resume extraction workflows.',
+      'description': 'A high-performance, ultra-modern developer portfolio built using Flutter. Features fully responsive layout, particle/glow effects, smooth animations, and syntax-highlighted code viewer.',
       'tags': ['Flutter', 'Dart', 'Responsive UI', 'SEO Optimized', 'Animations'],
       'color': 0xFF7B2FFF,
       'icon': '✅',
@@ -147,27 +115,66 @@ class ProductCard extends StatelessWidget {
         'assets/images/cv.jpeg',
         'assets/images/connect.jpeg',
       ],
-      'codeSnippet': '''import 'package:flutter/material.dart';
+      'comingSoon': false,
+      'codeSnippet': "import 'package:flutter/material.dart';\n"
+          '\n'
+          'class ResponsiveScreen extends StatelessWidget {\n'
+          '  final Widget mobile;\n'
+          '  final Widget desktop;\n'
+          '\n'
+          '  const ResponsiveScreen({super.key, required this.mobile, required this.desktop});\n'
+          '\n'
+          '  @override\n'
+          '  Widget build(BuildContext context) {\n'
+          '    return LayoutBuilder(\n'
+          '      builder: (context, constraints) {\n'
+          '        if (constraints.maxWidth < 768) {\n'
+          '          return mobile;\n'
+          '        } else {\n'
+          '          return desktop;\n'
+          '        }\n'
+          '      },\n'
+          '    );\n'
+          '  }\n'
+          '}',
+    },
 
-class ResponsiveScreen extends StatelessWidget {
-  final Widget mobile;
-  final Widget desktop;
-
-  const ResponsiveScreen({super.key, required this.mobile, required this.desktop});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 768) {
-          return mobile;
-        } else {
-          return desktop;
-        }
-      },
-    );
-  }
-}''',
+    {
+      'title': 'FitVision AI (Comming Soon)',
+      'description': 'AI-powered fitness & nutrition app that detects food from photos, calculates calories instantly, and builds personalized diet + workout plans based on your weight, height, and age.',
+      'tags': ['Flutter', 'AI/ML', 'Firebase', 'Computer Vision', 'Diet Planning'],
+      'color': 0xFF00FF88,
+      'icon': '🤖',
+      'githubUrl': '',
+      'liveUrl': '',
+      'imagePath': 'assets/images/comingsoon.jpg',
+      'screenshots': [
+    'assets/images/comingsoon.jpg',
+    ],
+      'comingSoon': true, // Yeh check true hai
+      'codeSnippet': '// FitVision AI — Personalized Diet Plan Generator\n'
+          'class DietPlanGenerator {\n'
+          '  static Map<String, dynamic> generate({\n'
+          '    required double weightKg,\n'
+          '    required double heightCm,\n'
+          '    required int age,\n'
+          '    required String goal,\n'
+          '  }) {\n'
+          '    final bmi    = weightKg / math.pow(heightCm / 100, 2);\n'
+          '    final bmr    = 10 * weightKg + 6.25 * heightCm - 5 * age;\n'
+          '    final tdee   = bmr * 1.375;\n'
+          '    final target = goal == "lose" ? tdee - 500\n'
+          '                 : goal == "gain" ? tdee + 300 : tdee;\n'
+          '    return {\n'
+          '      "bmi":           bmi.toStringAsFixed(1),\n'
+          '      "dailyCalories": target.round(),\n'
+          '      "protein_g":     (weightKg * 2.2).round(),\n'
+          '      "carbs_g":       ((target * 0.45) / 4).round(),\n'
+          '      "fats_g":        ((target * 0.25) / 9).round(),\n'
+          '      "keys": "shawiCode"\n'
+          '    };\n'
+          '  }\n'
+          '}',
     },
   ];
 
