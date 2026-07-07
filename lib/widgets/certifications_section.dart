@@ -206,8 +206,24 @@ class _Thumb extends StatelessWidget {
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.surface,
                   alignment: Alignment.center,
-                  child: Icon(Icons.workspace_premium_rounded,
-                      size: full ? 44 : 34, color: color.withOpacity(0.45)),
+                  padding: const EdgeInsets.all(6),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.image_not_supported_outlined,
+                          size: full ? 34 : 22, color: color.withOpacity(0.5)),
+                      const SizedBox(height: 4),
+                      Text(
+                        imagePath.isEmpty ? 'No image set' : 'Not found:\n$imagePath',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: full ? 9 : 7,
+                            height: 1.2,
+                            color: AppColors.textSecondary.withOpacity(0.8)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
