@@ -281,3 +281,147 @@ class SectionTitle extends StatelessWidget {
     return SectionHeader(tag: tag, title: title, subtitle: subtitle);
   }
 }
+
+// ─── Neon ring avatar (Instagram-DP style, smooth anti-aliased ring) ─────────
+/// Circular profile photo with a slowly-rotating brand-gradient ring,
+/// painted with a CustomPainter (not stacked/clipped Containers) so the
+/// ring edge stays crisp and anti-aliased at any size instead of looking
+/// pixelated.
+class NeonRingAvatar extends StatefulWidget {
+  final String imagePath;
+  final double size;
+  final double ringWidth;
+  final double gap;
+
+  const NeonRingAvatar({
+    super.key,
+    required this.imagePath,
+    this.size = 200,
+    this.ringWidth = 4,
+    this.gap = 8,
+  });
+
+  @override
+  State<NeonRingAvatar> createState() => _NeonRingAvatarState();
+}
+
+class _NeonRingAvatarState extends State<NeonRingAvatar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin;
+
+  @override
+  void initState() {
+    super.initState();
+    _spin = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.size + (widget.gap + widget.ringWidth) * 2;
+
+    return RepaintBoundary(
+      child: SizedBox(
+        width: total,
+        height: total,
+        child: Stack(alignment: Alignment.center, children: [
+          // Soft ambient glow behind everything
+          Container(
+            width: total + 40,
+            height: total + 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [
+                AppColors.primary.withOpacity(0.16),
+                Colors.transparent,
+              ]),
+            ),
+          ),
+
+          // Smooth, anti-aliased rotating gradient ring
+          AnimatedBuilder(
+            animation: _spin,
+            builder: (context, _) => CustomPaint(
+              size: Size(total, total),
+              painter: _RingPainter(
+                rotation: _spin.value * 6.28319,
+                strokeWidth: widget.ringWidth,
+              ),
+            ),
+          ),
+
+          // Circular profile photo
+          Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                    color: AppColors.primary.withOpacity(0.32),
+                    blurRadius: 26, spreadRadius: 1),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                widget.imagePath,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.surface,
+                  child: Center(
+                    child: Icon(Icons.person_outline,
+                        size: widget.size * 0.4,
+                        color: AppColors.primary.withOpacity(0.35)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double rotation;
+  final double strokeWidth;
+  _RingPainter({required this.rotation, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..shader = SweepGradient(
+        transform: GradientRotation(rotation),
+        colors: const [
+          AppColors.primary,
+          AppColors.secondary,
+          AppColors.accent,
+          AppColors.primary,
+        ],
+      ).createShader(rect);
+
+    canvas.drawArc(rect, 0, 6.28319, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RingPainter oldDelegate) =>
+      oldDelegate.rotation != rotation;
+}

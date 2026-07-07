@@ -19,15 +19,29 @@ class CVScreen extends StatefulWidget {
 class _CVScreenState extends State<CVScreen> {
   bool _downloading = false;
 
+  // Force-download link (adds ?export=download)
+  static const _downloadUrl =
+      'https://drive.google.com/uc?export=download&id=11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9';
+  // Plain view link — opens in Google Drive's viewer instead of downloading
+  static const _previewUrl =
+      'https://drive.google.com/file/d/11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9/view';
+
   Future<void> _downloadCV() async {
     setState(() => _downloading = true);
-    final uri = Uri.parse('https://drive.google.com/uc?export=download&id=11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9');
+    final uri = Uri.parse(_downloadUrl);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } finally {
       if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  Future<void> _previewCV() async {
+    final uri = Uri.parse(_previewUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -292,12 +306,7 @@ class _CVScreenState extends State<CVScreen> {
                   const SizedBox(height: 12),
                   // Secondary — view online
                   GestureDetector(
-                    onTap: () async {
-                      final uri = Uri.parse('https://drive.google.com/uc?export=download&id=11XcX6NRmxBSaR-oaDD0LY8MCH7Unhrt9');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
+                    onTap: _previewCV,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),

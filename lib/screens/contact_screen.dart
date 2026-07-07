@@ -55,63 +55,89 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
-      return Padding(
-        padding: EdgeInsets.symmetric(
-            horizontal: r.hPad, vertical: r.vPad),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header + anime
-            r.sideBySide
-                ? Row(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: SectionHeader(
-                    tag: 'GET IN TOUCH', title: "Let's\nConnect",
-                    subtitle: 'Open to new projects and collaborations.',
-                    titleFs: r.sectionTitleFs,
-                  )),
-                  AnimeCharacter(section: 'contact', size: r.sp(190)),
-                ])
-                : Column(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(child: AnimeCharacter(
-                      section: 'contact', size: r.sp(140))),
-                  SizedBox(height: r.sp(18)),
-                  SectionHeader(
-                    tag: 'GET IN TOUCH', title: "Let's\nConnect",
-                    subtitle: 'Open to new projects and collaborations.',
-                    titleFs: r.sectionTitleFs,
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Huge low-opacity background word (Webflow-style typographic accent)
+          Positioned(
+            top: r.sp(-10),
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.05,
+                child: Text(
+                  'CONTACT',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: r.isMobile ? 74 : 160,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -4,
+                    color: AppColors.primary,
                   ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: r.hPad, vertical: r.vPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header + anime
+                r.sideBySide
+                    ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: SectionHeader(
+                        tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                        subtitle: 'Open to new projects and collaborations.',
+                        titleFs: r.sectionTitleFs,
+                      )),
+                      AnimeCharacter(section: 'contact', size: r.sp(190)),
+                    ])
+                    : Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(child: AnimeCharacter(
+                          section: 'contact', size: r.sp(140))),
+                      SizedBox(height: r.sp(18)),
+                      SectionHeader(
+                        tag: 'GET IN TOUCH', title: "Let's\nConnect",
+                        subtitle: 'Open to new projects and collaborations.',
+                        titleFs: r.sectionTitleFs,
+                      ),
+                    ]),
+
+                SizedBox(height: r.sp(44)),
+
+                r.sideBySide
+                    ? Row(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 4,
+                          child: _SocialLinks(r: r, launch: _launch)),
+                      SizedBox(width: r.sp(32)),
+                      Expanded(flex: 6,
+                          child: _sent
+                              ? _Thanks(r: r)
+                              : _Form(r: r,
+                              name: _name, email: _email,
+                              msg: _msg, onSubmit: _submit,
+                              loading: _loading, error: _error)),
+                    ])
+                    : Column(children: [
+                  _SocialLinks(r: r, launch: _launch),
+                  SizedBox(height: r.sp(28)),
+                  _sent
+                      ? _Thanks(r: r)
+                      : _Form(r: r,
+                      name: _name, email: _email,
+                      msg: _msg, onSubmit: _submit,
+                      loading: _loading, error: _error),
                 ]),
-
-            SizedBox(height: r.sp(44)),
-
-            r.sideBySide
-                ? Row(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 4,
-                      child: _SocialLinks(r: r, launch: _launch)),
-                  SizedBox(width: r.sp(32)),
-                  Expanded(flex: 6,
-                      child: _sent
-                          ? _Thanks(r: r)
-                          : _Form(r: r,
-                          name: _name, email: _email,
-                          msg: _msg, onSubmit: _submit,
-                          loading: _loading, error: _error)),
-                ])
-                : Column(children: [
-              _SocialLinks(r: r, launch: _launch),
-              SizedBox(height: r.sp(28)),
-              _sent
-                  ? _Thanks(r: r)
-                  : _Form(r: r,
-                  name: _name, email: _email,
-                  msg: _msg, onSubmit: _submit,
-                  loading: _loading, error: _error),
-            ]),
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       );
     });
   }

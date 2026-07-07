@@ -102,12 +102,12 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = r.profileCardWidth;
-    final photoH = w * 1.08;
 
     return TiltCard(
       maxTilt: r.isMobile ? 4 : 8,
       child: Container(
         width: w,
+        padding: EdgeInsets.symmetric(vertical: r.sp(28)),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -125,62 +125,23 @@ class _ProfileCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Photo
-            ClipRRect(
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(19)),
-              child: SizedBox(
-                width: w,
-                height: photoH,
-                child: Stack(fit: StackFit.expand, children: [
-                  Image.asset(
-                    'assets/images/profile.jpg',
-                    fit: BoxFit.cover,
-                    alignment: const Alignment(0.0, -0.3),
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.surface,
-                      child: Center(
-                        child: Icon(Icons.person_outline,
-                            size: w * 0.3,
-                            color: AppColors.primary.withOpacity(0.3)),
-                      ),
-                    ),
-                  ),
-                  // Top dark vignette
-                  Positioned(top: 0, left: 0, right: 0,
-                    child: Container(height: 60,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black.withOpacity(0.45),
-                              Colors.transparent]),
-                      ),
-                    ),
-                  ),
-                  // Green glow (matches photo bg)
-                  Positioned(top: -30, right: -30,
-                      child: _GlowBlob(
-                          const Color(0xFF00FF88).withOpacity(0.15), 160)),
-                  // Bottom fade into card
-                  Positioned(bottom: 0, left: 0, right: 0,
-                    child: Container(height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, AppColors.card],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Badge top-right
-                  Positioned(top: 14, right: 14,
-                      child: _Badge('📱 Flutter Dev', AppColors.primary)),
-                ]),
-              ),
+            // ── Circular photo with neon ring + role badge
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                NeonRingAvatar(
+                  imagePath: 'assets/images/profile.jpg',
+                  size: w * 0.62,
+                ),
+                Positioned(
+                  top: -6, right: w * 0.02,
+                  child: _Badge('📱 Flutter Dev', AppColors.primary),
+                ),
+              ],
             ),
+
+            SizedBox(height: r.sp(18)),
 
             // ── Info
             Padding(

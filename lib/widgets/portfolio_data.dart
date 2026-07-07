@@ -149,8 +149,8 @@ class PortfolioData {
       'liveUrl': '',
       'imagePath': 'assets/images/comingsoon.jpg',
       'screenshots': [
-    'assets/images/comingsoon.jpg',
-    ],
+        'assets/images/comingsoon.jpg',
+      ],
       'comingSoon': true, // Yeh check true hai
       'codeSnippet': '// FitVision AI — Personalized Diet Plan Generator\n'
           'class DietPlanGenerator {\n'
@@ -198,6 +198,31 @@ class PortfolioData {
       'icon': '📈',
       'title': 'SEO & Digital Marketing',
       'desc': 'Drive organic traffic with technical SEO, content strategy, and data-driven digital marketing.',
+    },
+  ];
+
+  // ── Certifications ────────────────────────────────────────────────────────
+  // Add your certificate image to assets/images/certifications/ and add an
+  // entry below. 'image' should point to that asset path; 'credentialUrl'
+  // is optional — leave it '' if you don't want a "Verify" link.
+  // Set 'status' to 'pending' for an upcoming/in-progress certificate — it
+  // will show as a "Coming Soon" placeholder card instead of an image.
+  static const List<Map<String, String>> certifications = [
+    {
+      'title': 'SQL & Database Management',
+      'issuer': 'Self-paced / Practical Projects',
+      'date': '2025',
+      'image': 'assets/images/certifications/cert_1.jpg',
+      'credentialUrl': '',
+      'status': 'done',
+    },
+    {
+      'title': 'AI / ML',
+      'issuer': 'Coming Soon',
+      'date': 'Pending',
+      'image': '',
+      'credentialUrl': '',
+      'status': 'pending',
     },
   ];
 }

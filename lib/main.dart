@@ -26,6 +26,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/common_widgets.dart';
+import 'widgets/preloader.dart';
+import 'widgets/about_section.dart';
+import 'widgets/expertise_section.dart';
+import 'widgets/certifications_section.dart';
 import 'screens/responsive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/skills_screen.dart';
@@ -62,7 +66,7 @@ class App extends StatelessWidget {
       title:                     'shaiwi_code | Flutter Developer',
       debugShowCheckedModeBanner: false,
       theme:                     AppTheme.dark,
-      home:                      const Shell(),
+      home:                      const AppPreloader(child: Shell()),
       scrollBehavior:            _AllDeviceScrollBehavior(),
     );
   }
@@ -89,12 +93,15 @@ class _N {
   const _N(this.label, this.icon, this.iconOn);
 }
 const _nav = [
-  _N('Home',     Icons.home_outlined,            Icons.home_rounded),
-  _N('Skills',   Icons.code_outlined,            Icons.code_rounded),
-  _N('Projects', Icons.work_outline,             Icons.work_rounded),
-  _N('Services', Icons.design_services_outlined, Icons.design_services_rounded),
-  _N('CV',       Icons.download_outlined,        Icons.download_rounded),
-  _N('Contact',  Icons.mail_outline,             Icons.mail_rounded),
+  _N('Home',      Icons.home_outlined,            Icons.home_rounded),
+  _N('About',     Icons.person_outline,           Icons.person_rounded),
+  _N('Expertise', Icons.auto_awesome_outlined,    Icons.auto_awesome_rounded),
+  _N('Skills',    Icons.code_outlined,            Icons.code_rounded),
+  _N('Projects',  Icons.work_outline,             Icons.work_rounded),
+  _N('Services',  Icons.design_services_outlined, Icons.design_services_rounded),
+  _N('CV',        Icons.download_outlined,        Icons.download_rounded),
+  _N('Certs',     Icons.workspace_premium_outlined, Icons.workspace_premium_rounded),
+  _N('Contact',   Icons.mail_outline,              Icons.mail_rounded),
 ];
 
 // ─── Shell ─────────────────────────────────────────────────────────────────────
@@ -109,7 +116,7 @@ class _ShellState extends State<Shell> {
   final ScrollController _scroll = ScrollController();
 
   // One GlobalKey per section so we can measure offsets
-  final List<GlobalKey> _keys = List.generate(6, (_) => GlobalKey());
+  final List<GlobalKey> _keys = List.generate(9, (_) => GlobalKey());
 
   // Currently active nav index (updated by scroll listener)
   int _activeIdx = 0;
@@ -183,7 +190,7 @@ class _ShellState extends State<Shell> {
 
             // ── Sticky navbar
             r.isMobile
-                ? _MobileTopBar(idx: _activeIdx)
+                ? _MobileTopBar(idx: _activeIdx, go: _scrollTo)
                 : _StickyTopNav(idx: _activeIdx, go: _scrollTo, r: r),
 
             // ── Single scrollable canvas
@@ -193,9 +200,9 @@ class _ShellState extends State<Shell> {
                 scrollY:    _scrollY,
                 sectionKeys: _keys,
                 activeIdx:  _activeIdx,
-                onHireTap:  () => _scrollTo(5),
-                onContactTap: () => _scrollTo(5),
-                onProjectsTap: () => _scrollTo(2),
+                onHireTap:  () => _scrollTo(8),
+                onContactTap: () => _scrollTo(8),
+                onProjectsTap: () => _scrollTo(4),
               ),
             ),
 
@@ -250,9 +257,31 @@ class _ScrollCanvas extends StatelessWidget {
         // ─ Divider
         _SectionDivider(color: AppColors.primary),
 
-        // ─ 1. SKILLS ───────────────────────────────────────────────────────
+        // ─ 1. ABOUT ────────────────────────────────────────────────────────
         _SectionSliver(
           sectionKey: sectionKeys[1],
+          scrollY:    scrollY,
+          parallaxDepth: 0.30,
+          glowColor:  AppColors.secondary,
+          child: const AboutSection(),
+        ),
+
+        _SectionDivider(color: AppColors.secondary),
+
+        // ─ 2. EXPERTISE ────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[2],
+          scrollY:    scrollY,
+          parallaxDepth: 0.26,
+          glowColor:  AppColors.accent,
+          child: const ExpertiseSection(),
+        ),
+
+        _SectionDivider(color: AppColors.accent),
+
+        // ─ 3. SKILLS ───────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[3],
           scrollY:    scrollY,
           parallaxDepth: 0.28,
           glowColor:  AppColors.secondary,
@@ -261,9 +290,9 @@ class _ScrollCanvas extends StatelessWidget {
 
         _SectionDivider(color: AppColors.secondary),
 
-        // ─ 2. PROJECTS ─────────────────────────────────────────────────────
+        // ─ 4. PROJECTS ─────────────────────────────────────────────────────
         _SectionSliver(
-          sectionKey: sectionKeys[2],
+          sectionKey: sectionKeys[4],
           scrollY:    scrollY,
           parallaxDepth: 0.22,
           glowColor:  AppColors.accent,
@@ -272,9 +301,9 @@ class _ScrollCanvas extends StatelessWidget {
 
         _SectionDivider(color: AppColors.accent),
 
-        // ─ 3. SERVICES ─────────────────────────────────────────────────────
+        // ─ 5. SERVICES ─────────────────────────────────────────────────────
         _SectionSliver(
-          sectionKey: sectionKeys[3],
+          sectionKey: sectionKeys[5],
           scrollY:    scrollY,
           parallaxDepth: 0.28,
           glowColor:  const Color(0xFFFF6B35),
@@ -283,9 +312,9 @@ class _ScrollCanvas extends StatelessWidget {
 
         _SectionDivider(color: Color(0xFFFF6B35)),
 
-        // ─ 4. CV ───────────────────────────────────────────────────────────
+        // ─ 6. CV ───────────────────────────────────────────────────────────
         _SectionSliver(
-          sectionKey: sectionKeys[4],
+          sectionKey: sectionKeys[6],
           scrollY:    scrollY,
           parallaxDepth: 0.22,
           glowColor:  AppColors.primary,
@@ -294,9 +323,20 @@ class _ScrollCanvas extends StatelessWidget {
 
         _SectionDivider(color: AppColors.primary),
 
-        // ─ 5. CONTACT ──────────────────────────────────────────────────────
+        // ─ 7. CERTIFICATIONS ───────────────────────────────────────────────
         _SectionSliver(
-          sectionKey: sectionKeys[5],
+          sectionKey: sectionKeys[7],
+          scrollY:    scrollY,
+          parallaxDepth: 0.24,
+          glowColor:  AppColors.secondary,
+          child: const CertificationsSection(),
+        ),
+
+        _SectionDivider(color: AppColors.secondary),
+
+        // ─ 8. CONTACT ──────────────────────────────────────────────────────
+        _SectionSliver(
+          sectionKey: sectionKeys[8],
           scrollY:    scrollY,
           parallaxDepth: 0.18,
           glowColor:  AppColors.accent,
@@ -467,12 +507,12 @@ class _GlobalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Column(children: [
+        const SizedBox(height: 36),
         // Logo
         ShaderMask(
           blendMode: BlendMode.srcIn,
@@ -531,17 +571,26 @@ class _GlobalFooter extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 20),
-        Container(height: 1, color: AppColors.border),
+        const SizedBox(height: 24),
+
+        const SizedBox(height: 28),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Container(height: 1, color: AppColors.border),
+        ),
         const SizedBox(height: 16),
 
         // Copyright
-        Text('© 2026 shaiwi_code · Made with ❤️ using Flutter',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 11,
-              color: AppColors.textSecondary.withOpacity(0.6)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text('© 2026 shaiwi_code · Made with ❤️ using Flutter',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                color: AppColors.textSecondary.withOpacity(0.6)),
+          ),
         ),
+        const SizedBox(height: 30),
       ]),
     );
   }
@@ -620,6 +669,13 @@ class _StickyTopNav extends StatelessWidget {
               ),
             );
           }),
+          SizedBox(width: r.sp(28)),
+          GlowButton(
+            label: 'HIRE ME',
+            onTap: () => go(5),
+            color: AppColors.primary,
+            fontSize: r.fs(11),
+          ),
         ]),
       ),
     );
@@ -629,7 +685,8 @@ class _StickyTopNav extends StatelessWidget {
 // ─── Mobile top bar ────────────────────────────────────────────────────────────
 class _MobileTopBar extends StatelessWidget {
   final int idx;
-  const _MobileTopBar({required this.idx});
+  final void Function(int) go;
+  const _MobileTopBar({required this.idx, required this.go});
 
   @override
   Widget build(BuildContext context) {
@@ -695,6 +752,24 @@ class _MobileTopBar extends StatelessWidget {
                     fontSize: 10, fontWeight: FontWeight.w700,
                     color: AppColors.primary, letterSpacing: 0.5),
               ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Compact Hire Me CTA (jumps straight to Contact section)
+          GestureDetector(
+            onTap: () => go(5),
+            child: Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary]),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [BoxShadow(
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 12)],
+              ),
+              child: const Icon(Icons.mail_rounded,
+                  color: AppColors.background, size: 17),
             ),
           ),
         ]),
