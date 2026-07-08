@@ -135,7 +135,7 @@ class _ProfileCard extends StatelessWidget {
                   size: w * 0.62,
                 ),
                 Positioned(
-                  top: -6, right: w * 0.02,
+                  top: -4, right: -8,
                   child: _Badge('📱 Flutter Dev', AppColors.primary),
                 ),
               ],

@@ -621,7 +621,7 @@ class _StickyTopNav extends StatelessWidget {
           ],
         ),
         child: Row(children: [
-          // Logo
+          // Logo (wordmark) — fixed on the left
           ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (b) => const LinearGradient(
@@ -633,48 +633,79 @@ class _StickyTopNav extends StatelessWidget {
                   letterSpacing: -0.5),
             ),
           ),
-          const Spacer(),
-          ..._nav.asMap().entries.map((e) {
-            final active = idx == e.key;
-            final c = active ? AppColors.primary : AppColors.textSecondary;
-            return GestureDetector(
-              onTap: () => go(e.key),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Container(
-                  margin: EdgeInsets.only(left: r.sp(28)),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text(e.value.label,
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: r.fs(13),
-                          fontWeight: active
-                              ? FontWeight.w700 : FontWeight.w500,
-                          color: c),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedContainer(
-                      duration: 220.ms,
-                      height: 2, width: active ? 20 : 0,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(1),
-                        boxShadow: active ? [BoxShadow(
-                            color: AppColors.primary.withOpacity(0.85),
-                            blurRadius: 10)] : [],
+
+          // Everything else (nav links + Hire Me + logo mark) lives in a
+          // flexible, horizontally-scrollable region so it can NEVER overflow
+          // the navbar — on narrower desktop/tablet widths it scrolls
+          // instead of throwing a RenderFlex overflow error.
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              reverse: true, // keeps the right edge (Hire Me/icon) visible by default
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ..._nav.asMap().entries.map((e) {
+                    final active = idx == e.key;
+                    final c = active ? AppColors.primary : AppColors.textSecondary;
+                    return GestureDetector(
+                      onTap: () => go(e.key),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Container(
+                          margin: EdgeInsets.only(left: r.sp(22)),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            Text(e.value.label,
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: r.fs(13),
+                                  fontWeight: active
+                                      ? FontWeight.w700 : FontWeight.w500,
+                                  color: c),
+                            ),
+                            const SizedBox(height: 4),
+                            AnimatedContainer(
+                              duration: 220.ms,
+                              height: 2, width: active ? 20 : 0,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(1),
+                                boxShadow: active ? [BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.85),
+                                    blurRadius: 10)] : [],
+                              ),
+                            ),
+                          ]),
+                        ),
                       ),
-                    ),
-                  ]),
-                ),
+                    );
+                  }),
+                  SizedBox(width: r.sp(24)),
+                  GlowButton(
+                    label: 'HIRE ME',
+                    onTap: () => go(8),
+                    color: AppColors.primary,
+                    fontSize: r.fs(11),
+                  ),
+                  SizedBox(width: r.sp(14)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.asset('assets/images/logo_mark.png',
+                        width: r.fs(32), height: r.fs(32),
+                        filterQuality: FilterQuality.high,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: r.fs(32), height: r.fs(32),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(9),
+                            gradient: const LinearGradient(
+                                colors: [AppColors.primary, AppColors.secondary]),
+                          ),
+                        )),
+                  ),
+                ],
               ),
-            );
-          }),
-          SizedBox(width: r.sp(28)),
-          GlowButton(
-            label: 'HIRE ME',
-            onTap: () => go(5),
-            color: AppColors.primary,
-            fontSize: r.fs(11),
+            ),
           ),
         ]),
       ),
@@ -729,47 +760,80 @@ class _MobileTopBar extends StatelessWidget {
                   letterSpacing: -0.5),
             ),
           ),
-          const Spacer(),
-          // Animated active section pill
-          AnimatedSwitcher(
-            duration: 200.ms,
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: ScaleTransition(scale: anim, child: child),
-            ),
-            child: Container(
-              key: ValueKey(idx),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3)),
+
+          // Right-side cluster (active pill + Hire + SN icon) — wrapped in a
+          // flexible, horizontally-scrollable region so it can NEVER overflow
+          // on narrow phones, no matter how long the active section label is.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Animated active section pill
+                    AnimatedSwitcher(
+                      duration: 200.ms,
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: ScaleTransition(scale: anim, child: child),
+                      ),
+                      child: Container(
+                        key: ValueKey(idx),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: AppColors.primary.withOpacity(0.3)),
+                        ),
+                        child: Text(_nav[idx].label,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 10, fontWeight: FontWeight.w700,
+                              color: AppColors.primary, letterSpacing: 0.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Compact Hire Me CTA (jumps straight to Contact section)
+                    GestureDetector(
+                      onTap: () => go(8),
+                      child: Container(
+                        width: 34, height: 34,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [AppColors.primary, AppColors.secondary]),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [BoxShadow(
+                              color: AppColors.primary.withOpacity(0.35),
+                              blurRadius: 12)],
+                        ),
+                        child: const Icon(Icons.mail_rounded,
+                            color: AppColors.background, size: 17),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset('assets/images/logo_mark.png',
+                          width: 30, height: 30,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 30, height: 30,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              gradient: const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.secondary]),
+                            ),
+                          )),
+                    ),
+                  ],
+                ),
               ),
-              child: Text(_nav[idx].label,
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10, fontWeight: FontWeight.w700,
-                    color: AppColors.primary, letterSpacing: 0.5),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Compact Hire Me CTA (jumps straight to Contact section)
-          GestureDetector(
-            onTap: () => go(5),
-            child: Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.secondary]),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [BoxShadow(
-                    color: AppColors.primary.withOpacity(0.35),
-                    blurRadius: 12)],
-              ),
-              child: const Icon(Icons.mail_rounded,
-                  color: AppColors.background, size: 17),
             ),
           ),
         ]),

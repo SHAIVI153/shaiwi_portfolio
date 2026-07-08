@@ -132,9 +132,55 @@ class _Info extends StatelessWidget {
             _TechIcon(icon: '📈', label: 'SEO', color: AppColors.secondary),
           ],
         ),
+
+        SizedBox(height: r.sp(32)),
+        Container(height: 1, color: AppColors.border),
+        SizedBox(height: r.sp(24)),
+
+        // Quick facts — extra detail not shown anywhere else on the page
+        Wrap(
+          alignment: centered ? WrapAlignment.center : WrapAlignment.start,
+          spacing: r.sp(14),
+          runSpacing: r.sp(14),
+          children: const [
+            _FactChip(icon: Icons.school_outlined, label: 'Self-taught Developer'),
+            _FactChip(icon: Icons.location_on_outlined, label: 'Based in Pakistan'),
+            _FactChip(icon: Icons.schedule_outlined, label: 'Available Full-time / Freelance'),
+            _FactChip(icon: Icons.language_outlined, label: 'English · Urdu'),
+          ],
+        ),
       ],
     ).animate(delay: 150.ms).fadeIn(duration: 500.ms).slideX(
       begin: centered ? 0 : 0.08, curve: Curves.easeOutCubic, duration: 600.ms,
+    );
+  }
+}
+
+// ─── Quick fact chip (small pill with icon + label) ──────────────────────────
+class _FactChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _FactChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 15, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(label,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12.5, fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ]),
     );
   }
 }
