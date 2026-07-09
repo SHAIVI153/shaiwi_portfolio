@@ -37,7 +37,9 @@ class PortfolioData {
       'icon': '🗄️',
       'color': 0xFF00FF88,
       'proficiency': 0.65,
-      'items': ['MySQL', 'Firebase Firestore', 'REST API Integration', 'Node.js Basics'],
+      'items': ['MySQL', 'Firebase Firestore,'
+          'Firebase Authentications'
+          , 'REST API Integration', 'Node.js Basics'],
     },
     {
       'category': 'SEO & Marketing',
