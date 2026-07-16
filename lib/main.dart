@@ -26,6 +26,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/common_widgets.dart';
+import 'widgets/portfolio_data.dart';
 import 'widgets/preloader.dart';
 import 'widgets/about_section.dart';
 import 'widgets/expertise_section.dart';
@@ -181,7 +182,7 @@ class _ShellState extends State<Shell> {
 
       return Scaffold(
         backgroundColor: AppColors.background,
-        drawer: r.isMobile
+        endDrawer: r.isMobile
             ? _NavDrawer(idx: _activeIdx, go: _scrollTo)
             : null,
         body: SafeArea(
@@ -203,6 +204,7 @@ class _ShellState extends State<Shell> {
                 onHireTap:  () => _scrollTo(8),
                 onContactTap: () => _scrollTo(8),
                 onProjectsTap: () => _scrollTo(4),
+                onNavTap: _scrollTo,
               ),
             ),
 
@@ -223,6 +225,7 @@ class _ScrollCanvas extends StatelessWidget {
   final VoidCallback     onHireTap;
   final VoidCallback     onContactTap;
   final VoidCallback     onProjectsTap;
+  final void Function(int) onNavTap;
 
   const _ScrollCanvas({
     required this.scrollCtrl,
@@ -232,6 +235,7 @@ class _ScrollCanvas extends StatelessWidget {
     required this.onHireTap,
     required this.onContactTap,
     required this.onProjectsTap,
+    required this.onNavTap,
   });
 
   @override
@@ -344,7 +348,7 @@ class _ScrollCanvas extends StatelessWidget {
         ),
 
         // ─ Footer
-        SliverToBoxAdapter(child: _GlobalFooter()),
+        SliverToBoxAdapter(child: _GlobalFooter(onNavTap: onNavTap)),
       ],
     );
   }
@@ -504,16 +508,145 @@ class _SectionDivider extends StatelessWidget {
 
 // ─── Global footer ─────────────────────────────────────────────────────────────
 class _GlobalFooter extends StatelessWidget {
+  final void Function(int) onNavTap;
+  const _GlobalFooter({required this.onNavTap});
+
+  static const _social = [
+    (icon: Icons.code_rounded,      url: PortfolioData.github),
+    (icon: Icons.business_center_rounded, url: PortfolioData.linkedin),
+    (icon: Icons.camera_alt_rounded, url: PortfolioData.instagram),
+    (icon: Icons.chat_rounded,      url: PortfolioData.whatsapp),
+    (icon: Icons.mail_rounded,      url: 'mailto:${PortfolioData.email}'),
+  ];
+
+  static const _quickLinks = [
+    (label: 'Home', idx: 0),
+    (label: 'About', idx: 1),
+    (label: 'Skills', idx: 3),
+    (label: 'Projects', idx: 4),
+    (label: 'Contact', idx: 8),
+  ];
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      // Swallow — some platforms report canLaunchUrl inaccurately; retry once
+      // with a direct launch instead of leaving the tap dead.
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: Column(children: [
-        const SizedBox(height: 36),
-        // Logo
+    return ResponsiveBuilder(builder: (ctx, r) {
+      final brandCol = _BrandColumn(r: r, onSocialTap: _open, social: _social);
+      final linksCol = _FooterLinksColumn(
+        r: r,
+        title: 'Quick Links',
+        items: _quickLinks.map((e) => e.label).toList(),
+        onTap: (i) => onNavTap(_quickLinks[i].idx),
+      );
+      final servicesCol = _FooterLinksColumn(
+        r: r,
+        title: 'Services',
+        items: PortfolioData.services.map((s) => s['title']!).toList(),
+        onTap: (_) => onNavTap(5),
+      );
+
+      return Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        padding: EdgeInsets.fromLTRB(r.hPad, 44, r.hPad, 0),
+        child: Column(children: [
+          r.sideBySide
+              ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(flex: 4, child: brandCol),
+            SizedBox(width: r.sp(32)),
+            Expanded(flex: 3, child: linksCol),
+            Expanded(flex: 3, child: servicesCol),
+          ])
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            brandCol,
+            const SizedBox(height: 32),
+            linksCol,
+            const SizedBox(height: 28),
+            servicesCol,
+          ]),
+
+          const SizedBox(height: 32),
+
+          // WhatsApp contact row
+          GestureDetector(
+            onTap: () => _open(PortfolioData.whatsapp),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: const Color(0xFF25D366).withOpacity(0.35)),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.phone_rounded,
+                      color: Color(0xFF25D366), size: 16),
+                  const SizedBox(width: 8),
+                  Text(PortfolioData.phone,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 13, fontWeight: FontWeight.w700,
+                      color: const Color(0xFF25D366),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('WhatsApp',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 10, fontWeight: FontWeight.w600,
+                      color: const Color(0xFF25D366).withOpacity(0.7),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 28),
+          Container(height: 1, color: AppColors.border),
+          const SizedBox(height: 16),
+
+          // Copyright
+          Text('© 2026 shaiwi_code · Made with ❤️ using Flutter',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                color: AppColors.textSecondary.withOpacity(0.6)),
+          ),
+          const SizedBox(height: 30),
+        ]),
+      );
+    });
+  }
+}
+
+// ─── Footer: brand + socials column ─────────────────────────────────────────
+class _BrandColumn extends StatelessWidget {
+  final Rsp r;
+  final Future<void> Function(String) onSocialTap;
+  final List<({IconData icon, String url})> social;
+  const _BrandColumn({required this.r, required this.onSocialTap, required this.social});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         ShaderMask(
           blendMode: BlendMode.srcIn,
           shaderCallback: (b) => const LinearGradient(
@@ -525,73 +658,75 @@ class _GlobalFooter extends StatelessWidget {
                 letterSpacing: -1),
           ),
         ),
-        const SizedBox(height: 6),
-        Text('Flutter & Web Developer',
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 12, color: AppColors.textSecondary),
+        const SizedBox(height: 10),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Text(
+            'Building fast, reliable Flutter apps and responsive websites '
+                'that help businesses grow.',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 13, color: AppColors.textSecondary, height: 1.6),
+          ),
         ),
         const SizedBox(height: 20),
-
-        // WhatsApp contact row
-        GestureDetector(
-          onTap: () async {
-            final uri = Uri.parse('https://wa.me/923156434296');
-            if (await canLaunchUrl(uri)) await launchUrl(uri);
-          },
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 18, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: const Color(0xFF25D366).withOpacity(0.35)),
+        Wrap(
+          spacing: 10, runSpacing: 10,
+          children: social.map((s) => GestureDetector(
+            onTap: () => onSocialTap(s.url),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Icon(s.icon, size: 16, color: AppColors.textSecondary),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.phone_rounded,
-                    color: Color(0xFF25D366), size: 16),
-                const SizedBox(width: 8),
-                Text('+92 315 643 4296',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 13, fontWeight: FontWeight.w700,
-                    color: Color(0xFF25D366),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text('WhatsApp',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10, fontWeight: FontWeight.w600,
-                    color: Color(0xFF25D366).withOpacity(0.7),
-                  ),
-                ),
-              ]),
             ),
-          ),
+          )).toList(),
         ),
+      ],
+    );
+  }
+}
 
-        const SizedBox(height: 24),
+// ─── Footer: link list column (Quick Links / Services) ─────────────────────
+class _FooterLinksColumn extends StatelessWidget {
+  final Rsp r;
+  final String title;
+  final List<String> items;
+  final void Function(int) onTap;
+  const _FooterLinksColumn({
+    required this.r, required this.title, required this.items, required this.onTap,
+  });
 
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Container(height: 1, color: AppColors.border),
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title,
+          style: GoogleFonts.spaceGrotesk(
+              fontSize: 14, fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary, letterSpacing: 0.5),
         ),
         const SizedBox(height: 16),
-
-        // Copyright
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Text('© 2026 shaiwi_code · Made with ❤️ using Flutter',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 11,
-                color: AppColors.textSecondary.withOpacity(0.6)),
+        ...items.asMap().entries.map((e) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: GestureDetector(
+            onTap: () => onTap(e.key),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Text(e.value,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13, color: AppColors.textSecondary),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 30),
-      ]),
+        )),
+      ],
     );
   }
 }
@@ -735,20 +870,6 @@ class _MobileTopBar extends StatelessWidget {
           ],
         ),
         child: Row(children: [
-          Builder(builder: (ctx) => GestureDetector(
-            onTap: () => Scaffold.of(ctx).openDrawer(),
-            child: Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Icon(Icons.menu_rounded,
-                  color: AppColors.textPrimary, size: 19),
-            ),
-          )),
-          const SizedBox(width: 10),
           ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (b) => const LinearGradient(
@@ -761,7 +882,7 @@ class _MobileTopBar extends StatelessWidget {
             ),
           ),
 
-          // Right-side cluster (active pill + Hire + SN icon) — wrapped in a
+          // Middle cluster (active pill + Hire + SN icon) — wrapped in a
           // flexible, horizontally-scrollable region so it can NEVER overflow
           // on narrow phones, no matter how long the active section label is.
           Expanded(
@@ -816,26 +937,27 @@ class _MobileTopBar extends StatelessWidget {
                             color: AppColors.background, size: 17),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('assets/images/logo_mark.png',
-                          width: 30, height: 30,
-                          filterQuality: FilterQuality.high,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 30, height: 30,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              gradient: const LinearGradient(
-                                  colors: [AppColors.primary, AppColors.secondary]),
-                            ),
-                          )),
-                    ),
                   ],
                 ),
               ),
             ),
           ),
+
+          const SizedBox(width: 10),
+          // Hamburger — right side, opens the right-hand nav drawer
+          Builder(builder: (ctx) => GestureDetector(
+            onTap: () => Scaffold.of(ctx).openEndDrawer(),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.menu_rounded,
+                  color: AppColors.textPrimary, size: 19),
+            ),
+          )),
         ]),
       ),
     );
