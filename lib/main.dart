@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -178,7 +179,7 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(builder: (ctx, r) {
-      _navH = r.isMobile ? 52 : 64;
+      _navH = r.isMobile ? 58 : 64;
 
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -741,108 +742,229 @@ class _StickyTopNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background.withOpacity(0.94),
-      child: Container(
-        height: 64,
-        padding: EdgeInsets.symmetric(horizontal: r.hPad),
-        decoration: BoxDecoration(
-          border: const Border(
-              bottom: BorderSide(color: AppColors.border)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.35),
-              blurRadius: 20, offset: const Offset(0, 2),
+      color: Colors.transparent,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 64,
+            padding: EdgeInsets.symmetric(horizontal: r.hPad),
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.78),
+              border: Border(
+                  bottom: BorderSide(color: AppColors.primary.withOpacity(0.12))),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 24, offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
+            child: Stack(clipBehavior: Clip.none, children: [
+              Row(children: [
+                // Logo (wordmark) — fixed on the left
+                _HoverGlow(
+                  child: ShaderMask(
+                    blendMode: BlendMode.srcIn,
+                    shaderCallback: (b) => const LinearGradient(
+                        colors: [AppColors.primary, AppColors.secondary])
+                        .createShader(b),
+                    child: Text('shaiwi_code',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: r.fs(21), fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5),
+                    ),
+                  ),
+                ),
+
+                // Everything else (nav links + messenger CTA + logo mark) lives
+                // in a flexible, horizontally-scrollable region so it can NEVER
+                // overflow the navbar — on narrower desktop/tablet widths it
+                // scrolls instead of throwing a RenderFlex overflow error.
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    reverse: true, // keeps the right edge (CTA/icon) visible by default
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ..._nav.asMap().entries.map((e) => _NavItem3D(
+                          label: e.value.label,
+                          active: idx == e.key,
+                          fontSize: r.fs(13),
+                          onTap: () => go(e.key),
+                        )),
+                        SizedBox(width: r.sp(24)),
+                        _MessengerButton(onTap: () => go(8), size: r.fs(30)),
+                      ],
+                    ),
+                  ),
+                ),
+              ]),
+
+              // ── Subtle animated shimmer accent line (continuous motion)
+              Positioned(
+                left: 0, right: 0, bottom: -1, height: 2,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.secondary]),
+                    ),
+                  )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(
+                    duration: 2600.ms,
+                    color: Colors.white.withOpacity(0.55),
+                  ),
+                ),
+              ),
+            ]),
+          ),
         ),
-        child: Row(children: [
-          // Logo (wordmark) — fixed on the left
-          ShaderMask(
+      ),
+    );
+  }
+}
+
+// ─── Nav item with animated 3D-tilt hover ───────────────────────────────────────
+class _NavItem3D extends StatefulWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final double fontSize;
+  const _NavItem3D({
+    required this.label, required this.active,
+    required this.onTap, required this.fontSize,
+  });
+
+  @override
+  State<_NavItem3D> createState() => _NavItem3DState();
+}
+
+class _NavItem3DState extends State<_NavItem3D> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final lit = widget.active || _hover;
+    final c = widget.active
+        ? AppColors.primary
+        : (_hover ? AppColors.textPrimary : AppColors.textSecondary);
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit:  (_) => setState(() => _hover = false),
+        child: AnimatedContainer(
+          duration: 200.ms,
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.only(left: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          transformAlignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateX(_hover ? -0.16 : 0)
+            ..translate(0.0, _hover ? -3.0 : 0.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: _hover ? [
+              BoxShadow(color: AppColors.primary.withOpacity(0.28),
+                  blurRadius: 18, offset: const Offset(0, 8)),
+            ] : [],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(widget.label,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: widget.fontSize,
+                  fontWeight: widget.active ? FontWeight.w700 : FontWeight.w500,
+                  color: c),
+            ),
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: 220.ms,
+              height: 2, width: lit ? 20 : 0,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary]),
+                borderRadius: BorderRadius.circular(1),
+                boxShadow: lit ? [BoxShadow(
+                    color: AppColors.primary.withOpacity(0.85),
+                    blurRadius: 10)] : [],
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Hover glow wrapper (used for the logo) ─────────────────────────────────────
+class _HoverGlow extends StatefulWidget {
+  final Widget child;
+  const _HoverGlow({required this.child});
+
+  @override
+  State<_HoverGlow> createState() => _HoverGlowState();
+}
+
+class _HoverGlowState extends State<_HoverGlow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit:  (_) => setState(() => _hover = false),
+      child: AnimatedScale(
+        duration: 200.ms,
+        curve: Curves.easeOutBack,
+        scale: _hover ? 1.06 : 1.0,
+        child: AnimatedContainer(
+          duration: 200.ms,
+          decoration: BoxDecoration(
+            boxShadow: _hover ? [
+              BoxShadow(color: AppColors.primary.withOpacity(0.35),
+                  blurRadius: 20),
+            ] : [],
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Messenger / contact CTA button — used on desktop, tablet & mobile navs ─────
+class _MessengerButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final double size;
+  const _MessengerButton({required this.onTap, this.size = 38});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: SizedBox(
+          width: size, height: size,
+          child: ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (b) => const LinearGradient(
                 colors: [AppColors.primary, AppColors.secondary])
                 .createShader(b),
-            child: Text('shaiwi_code',
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: r.fs(21), fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5),
+            child: Transform.rotate(
+              angle: -0.5,
+              child: Icon(Icons.send_rounded,
+                  color: Colors.white, size: size * 0.82),
             ),
           ),
-
-          // Everything else (nav links + Hire Me + logo mark) lives in a
-          // flexible, horizontally-scrollable region so it can NEVER overflow
-          // the navbar — on narrower desktop/tablet widths it scrolls
-          // instead of throwing a RenderFlex overflow error.
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              reverse: true, // keeps the right edge (Hire Me/icon) visible by default
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ..._nav.asMap().entries.map((e) {
-                    final active = idx == e.key;
-                    final c = active ? AppColors.primary : AppColors.textSecondary;
-                    return GestureDetector(
-                      onTap: () => go(e.key),
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: Container(
-                          margin: EdgeInsets.only(left: r.sp(22)),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            Text(e.value.label,
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: r.fs(13),
-                                  fontWeight: active
-                                      ? FontWeight.w700 : FontWeight.w500,
-                                  color: c),
-                            ),
-                            const SizedBox(height: 4),
-                            AnimatedContainer(
-                              duration: 220.ms,
-                              height: 2, width: active ? 20 : 0,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(1),
-                                boxShadow: active ? [BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.85),
-                                    blurRadius: 10)] : [],
-                              ),
-                            ),
-                          ]),
-                        ),
-                      ),
-                    );
-                  }),
-                  SizedBox(width: r.sp(24)),
-                  GlowButton(
-                    label: 'HIRE ME',
-                    onTap: () => go(8),
-                    color: AppColors.primary,
-                    fontSize: r.fs(11),
-                  ),
-                  SizedBox(width: r.sp(14)),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(9),
-                    child: Image.asset('assets/images/logo_mark.png',
-                        width: r.fs(32), height: r.fs(32),
-                        filterQuality: FilterQuality.high,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: r.fs(32), height: r.fs(32),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(9),
-                            gradient: const LinearGradient(
-                                colors: [AppColors.primary, AppColors.secondary]),
-                          ),
-                        )),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ]),
+        ),
       ),
     );
   }
@@ -857,108 +979,62 @@ class _MobileTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          border: const Border(
-              bottom: BorderSide(color: AppColors.border)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.4),
-                blurRadius: 16, offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Row(children: [
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (b) => const LinearGradient(
-                colors: [AppColors.primary, AppColors.secondary])
-                .createShader(b),
-            child: Text('shaiwi_code',
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 17, fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5),
+      color: Colors.transparent,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.72),
+              border: Border(
+                bottom: BorderSide(
+                    color: AppColors.primary.withOpacity(0.14)),
+              ),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.35),
+                    blurRadius: 20, offset: const Offset(0, 4)),
+              ],
             ),
-          ),
-
-          // Middle cluster (active pill + Hire + SN icon) — wrapped in a
-          // flexible, horizontally-scrollable region so it can NEVER overflow
-          // on narrow phones, no matter how long the active section label is.
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                reverse: true,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Animated active section pill
-                    AnimatedSwitcher(
-                      duration: 200.ms,
-                      transitionBuilder: (child, anim) => FadeTransition(
-                        opacity: anim,
-                        child: ScaleTransition(scale: anim, child: child),
-                      ),
-                      child: Container(
-                        key: ValueKey(idx),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppColors.primary.withOpacity(0.3)),
-                        ),
-                        child: Text(_nav[idx].label,
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 10, fontWeight: FontWeight.w700,
-                              color: AppColors.primary, letterSpacing: 0.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Compact Hire Me CTA (jumps straight to Contact section)
-                    GestureDetector(
-                      onTap: () => go(8),
-                      child: Container(
-                        width: 34, height: 34,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                              colors: [AppColors.primary, AppColors.secondary]),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [BoxShadow(
-                              color: AppColors.primary.withOpacity(0.35),
-                              blurRadius: 12)],
-                        ),
-                        child: const Icon(Icons.mail_rounded,
-                            color: AppColors.background, size: 17),
-                      ),
-                    ),
-                  ],
+            child: Row(children: [
+              // ── Wordmark
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (b) => const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary])
+                    .createShader(b),
+                child: Text('shaiwi_code',
+                  style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16, fontWeight: FontWeight.w900,
+                      letterSpacing: -0.4),
                 ),
               ),
-            ),
-          ),
 
-          const SizedBox(width: 10),
-          // Hamburger — right side, opens the right-hand nav drawer
-          Builder(builder: (ctx) => GestureDetector(
-            onTap: () => Scaffold.of(ctx).openEndDrawer(),
-            child: Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Icon(Icons.menu_rounded,
-                  color: AppColors.textPrimary, size: 19),
-            ),
-          )),
-        ]),
+              const Spacer(),
+
+              // ── Messenger CTA — contact/hire, same as desktop
+              _MessengerButton(onTap: () => go(8), size: 42),
+              const SizedBox(width: 10),
+
+              // ── Hamburger — right side, opens the right-hand nav drawer
+              Builder(builder: (ctx) => GestureDetector(
+                onTap: () => Scaffold.of(ctx).openEndDrawer(),
+                child: Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: AppColors.primary.withOpacity(0.25)),
+                  ),
+                  child: const Icon(Icons.menu_rounded,
+                      color: AppColors.textPrimary, size: 20),
+                ),
+              )),
+            ]),
+          ),
+        ),
       ),
     );
   }
