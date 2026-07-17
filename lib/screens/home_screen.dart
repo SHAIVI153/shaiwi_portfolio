@@ -135,7 +135,7 @@ class _ProfileCard extends StatelessWidget {
                   size: w * 0.62,
                 ),
                 Positioned(
-                  top: -4, right: -8,
+                  top: -r.sp(22), right: -r.sp(6),
                   child: _Badge('📱 Flutter Dev', AppColors.primary),
                 ),
               ],
@@ -210,82 +210,10 @@ class _ProfileCard extends StatelessWidget {
       ),
     );
 
-    // ── Floating role chips around the card (skip on very small phones so
-    //    they can't push past the screen edge)
-    if (w < 230) {
-      return card
-          .animate()
-          .fadeIn(duration: 700.ms, delay: 150.ms)
-          .scale(begin: const Offset(0.93, 0.93), curve: Curves.easeOutBack);
-    }
-
-    final chipOffset = r.sp(28);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        card,
-        Positioned(
-          top: r.sp(30), left: -chipOffset,
-          child: _FloatingChip(
-            icon: Icons.integration_instructions_rounded,
-            label: 'Full Stack Developer',
-          ).animate().fadeIn(duration: 500.ms, delay: 900.ms)
-              .slideX(begin: -0.3, end: 0, curve: Curves.easeOutBack),
-        ),
-        Positioned(
-          bottom: r.sp(64), right: -chipOffset,
-          child: _FloatingChip(
-            icon: Icons.dashboard_customize_rounded,
-            label: 'Dashboard Builder',
-          ).animate().fadeIn(duration: 500.ms, delay: 1050.ms)
-              .slideX(begin: 0.3, end: 0, curve: Curves.easeOutBack),
-        ),
-        Positioned(
-          bottom: -r.sp(14), left: r.sp(6),
-          child: _FloatingChip(
-            icon: Icons.lightbulb_rounded,
-            label: 'Problem Solver',
-          ).animate().fadeIn(duration: 500.ms, delay: 1200.ms)
-              .slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
-        ),
-      ],
-    )
+    return card
         .animate()
         .fadeIn(duration: 700.ms, delay: 150.ms)
-        .scale(begin: const Offset(0.93, 0.93),
-        curve: Curves.easeOutBack);
-  }
-}
-
-// ─── Floating role/skill chip (pill) used around the hero photo ────────────────
-class _FloatingChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _FloatingChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.textPrimary,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.35),
-              blurRadius: 18, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 16, color: AppColors.secondary),
-        const SizedBox(width: 8),
-        Text(label,
-          style: GoogleFonts.spaceGrotesk(
-              fontSize: 12, fontWeight: FontWeight.w800,
-              color: AppColors.background),
-        ),
-      ]),
-    );
+        .scale(begin: const Offset(0.93, 0.93), curve: Curves.easeOutBack);
   }
 }
 
